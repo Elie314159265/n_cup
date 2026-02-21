@@ -1,0 +1,109 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: yoku_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Setup database
+        run: |
+          bundle exec rails db:create db:migrate
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/yoku_test
+
+      - name: Run RSpec
+        run: bundle exec rspec
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/yoku_test
+
+  build-and-push:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker image
+        working-directory: backend
+        run: |
+          docker build -t yoku-api .
+          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name yoku-cluster --region us-east-1
+
+      - name: Deploy to EKS
+        run: |
+          kubectl set image deployment/rails-api \
+            rails=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+          kubectl set image deployment/action-cable \
+            cable=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+          kubectl set image deployment/sidekiq \
+            sidekiq=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+          kubectl rollout status deployment/rails-api
+          kubectl rollout status deployment/action-cable
+          kubectl rollout status deployment/sidekiq
