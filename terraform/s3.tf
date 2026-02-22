@@ -41,6 +41,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "user_assets" {
     id     = "transition-to-ia"
     status = "Enabled"
 
+    filter {}
+
     transition {
       days          = 90
       storage_class = "STANDARD_IA"
@@ -110,6 +112,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "transcribe_input" {
   rule {
     id     = "delete-after-1-day"
     status = "Enabled"
+
+    filter {}
 
     expiration {
       days = 1
