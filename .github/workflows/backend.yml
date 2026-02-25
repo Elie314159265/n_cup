@@ -23,7 +23,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: yoku_test
+          MYSQL_DATABASE: link_persona_test
         ports:
           - 3306:3306
         options: >-
@@ -46,13 +46,13 @@ jobs:
           bundle exec rails db:create db:migrate
         env:
           RAILS_ENV: test
-          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/yoku_test
+          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/link_persona_test
 
       - name: Run RSpec
         run: bundle exec rspec
         env:
           RAILS_ENV: test
-          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/yoku_test
+          DATABASE_URL: mysql2://root:password@127.0.0.1:3306/link_persona_test
 
   build-and-push:
     needs: test
@@ -66,18 +66,18 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
 
       - uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and Push Docker image
         working-directory: backend
         run: |
-          docker build -t yoku-api .
-          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
-          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
-          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
+          docker build -t link_persona-api .
+          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
 
   deploy:
     needs: build-and-push
@@ -90,20 +90,20 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name yoku-cluster --region us-east-1
+          aws eks update-kubeconfig --name link_persona-cluster --region ap-northeast-1
 
       - name: Deploy to EKS
         run: |
           kubectl set image deployment/rails-api \
-            rails=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            rails=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl set image deployment/action-cable \
-            cable=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            cable=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl set image deployment/sidekiq \
-            sidekiq=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            sidekiq=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl rollout status deployment/rails-api
           kubectl rollout status deployment/action-cable
           kubectl rollout status deployment/sidekiq

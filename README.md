@@ -1,4 +1,4 @@
-# yoku - AR×マッチングアプリ
+# LinkPersona - AR×マッチングアプリ
 
 **ARで理想の人とマッチング！気になる相手とARアバターでお話しよう**
 
@@ -8,7 +8,7 @@
 
 「気になる人と話してみたいけど、恥ずかしい...」
 
-そんなあなたに **yoku** は、マッチングした相手のAIアバターとリアルタイム音声会話ができる、次世代マッチングアプリです。相手のプロフィールを学習したAIが相手になりきって会話するので、実際に会う前に相手の雰囲気や相性を確認できます。
+そんなあなたに **LinkPersona** は、マッチングした相手のAIアバターとリアルタイム音声会話ができる、次世代マッチングアプリです。相手のプロフィールを学習したAIが相手になりきって会話するので、実際に会う前に相手の雰囲気や相性を確認できます。
 
 ### 主な特徴
 
@@ -272,11 +272,11 @@ npm run dev
 
 #### Backend: `backend/.env`
 ```bash
-DATABASE_URL=mysql2://user:password@localhost:3306/yoku_development
+DATABASE_URL=mysql2://user:password@localhost:3306/link_persona_development
 REDIS_URL=redis://localhost:6379
-AWS_REGION=us-east-1
-S3_BUCKET_NAME=yoku-user-assets-production
-COGNITO_USER_POOL_ID=us-east-1_xxxxxxxxx
+AWS_REGION=ap-northeast-1
+S3_BUCKET_NAME=link_persona-user-assets-production
+COGNITO_USER_POOL_ID=ap-northeast-1_xxxxxxxxx
 COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxx
 ```
 
@@ -307,11 +307,11 @@ terraform apply -var="db_password=your-password"
 
 ```bash
 # EKS クラスタに接続
-aws eks update-kubeconfig --name yoku-cluster --region us-east-1
+aws eks update-kubeconfig --name link_persona-cluster --region ap-northeast-1
 
 # Secretsの作成
 kubectl create secret generic db-credentials \
-  --from-literal=url='mysql2://user:password@host:3306/yoku_production'
+  --from-literal=url='mysql2://user:password@host:3306/link_persona_production'
 
 kubectl create secret generic cognito-credentials \
   --from-literal=user_pool_id='xxx' \
@@ -341,7 +341,7 @@ cd frontend
 npm run build
 
 # S3にアップロード
-aws s3 sync out s3://yoku-frontend-production --delete
+aws s3 sync out s3://link_persona-frontend-production --delete
 
 # CloudFront キャッシュ無効化
 aws cloudfront create-invalidation \
