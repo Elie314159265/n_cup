@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
 import Image from "next/image";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
+import { Explosion } from "@/components/discover/bomb/Explosion";
 
 interface LikedUser {
   id: string;
@@ -184,8 +186,14 @@ export default function MessagesPage() {
   const [likedUsers, setLikedUsers] = useState<LikedUser[]>([]);
   const [requests, setRequests] = useState(DUMMY_REQUESTS);
   const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
-    null
+    null,
   );
+  const [isExploding, setIsExploding] = useState(false);
+  const [explodingRequestId, setExplodingRequestId] = useState<string | null>(
+    null,
+  );
+  const [showFadeOverlay, setShowFadeOverlay] = useState(false);
+  const [fadeOpacity, setFadeOpacity] = useState(0);
 
   useEffect(() => {
     // ローカルストレージからいいねしたユーザーを取得
@@ -200,8 +208,28 @@ export default function MessagesPage() {
   };
 
   const handleReject = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+    setExplodingRequestId(id);
+    setIsExploding(true);
+  };
+
+  const handleExplosionComplete = () => {
+    // 爆発終了時は画面が真っ黒なので、オーバーレイを表示して状態を引き継ぐ
+    setShowFadeOverlay(true);
+    setFadeOpacity(1);
+
+    if (explodingRequestId) {
+      setRequests((prev) => prev.filter((r) => r.id !== explodingRequestId));
+    }
+    setIsExploding(false);
+    setExplodingRequestId(null);
+    // モーダルを閉じる
     setSelectedRequest(null);
+
+    // 次のフレームでフェードイン（透明化）を開始
+    setTimeout(() => {
+      setFadeOpacity(0);
+      setTimeout(() => setShowFadeOverlay(false), 1000);
+    }, 50);
   };
 
   return (
@@ -210,6 +238,30 @@ export default function MessagesPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">メッセージ</h1>
         <p className="text-gray-600">マッチングした相手とチャット</p>
       </div>
+
+      {/* 爆発エフェクトオーバーレイ */}
+      {isExploding && (
+        <div className="fixed inset-0 z-[60] pointer-events-none flex items-center justify-center">
+          <Canvas camera={{ position: [0, 0, 5] }}>
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} />
+            <Explosion
+              position={[0, 0, 0]}
+              color="#ef4444"
+              count={40}
+              onComplete={handleExplosionComplete}
+            />
+          </Canvas>
+        </div>
+      )}
+
+      {/* フェードイン用オーバーレイ（暗転からの復帰） */}
+      {showFadeOverlay && (
+        <div
+          className="fixed inset-0 z-[70] bg-black pointer-events-none transition-opacity duration-1000 ease-out"
+          style={{ opacity: fadeOpacity }}
+        />
+      )}
 
       {/* マッチング待ちリスト */}
       <div className="mb-8">
