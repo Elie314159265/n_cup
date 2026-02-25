@@ -20,7 +20,7 @@ interface SwipeCardProps {
 
 export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
-    null
+    null,
   );
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isAnimating, setIsAnimating] = useState(false);
