@@ -13,13 +13,20 @@ RSpec.describe 'Api::V1::Auth', type: :request do
     context '正常系' do
       before do
         allow(cognito_service).to receive(:sign_up).and_return({ user_sub: 'cognito-sub-new', user_confirmed: false })
+        allow(cognito_service).to receive(:admin_confirm_sign_up)
+        allow(cognito_service).to receive(:sign_in).and_return({
+          id_token: 'id_token', access_token: 'access_token',
+          refresh_token: 'refresh_token', expires_in: 3600
+        })
       end
 
-      it '201を返してユーザーを作成する' do
+      it '201を返してユーザーを作成しトークンを含む' do
         post '/api/v1/auth/signup', params: params
         expect(response).to have_http_status(:created)
         body = JSON.parse(response.body)
         expect(body['user']['email']).to eq('new@example.com')
+        expect(body['id_token']).to eq('id_token')
+        expect(body['refresh_token']).to eq('refresh_token')
         expect(User.find_by(email: 'new@example.com')).to be_present
       end
     end
@@ -52,7 +59,7 @@ RSpec.describe 'Api::V1::Auth', type: :request do
         post '/api/v1/auth/signin', params: { email: user.email, password: 'Password1' }
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['tokens']['id_token']).to eq('id_token')
+        expect(body['id_token']).to eq('id_token')
         expect(body['user']['email']).to eq(user.email)
       end
     end
@@ -82,7 +89,7 @@ RSpec.describe 'Api::V1::Auth', type: :request do
         post '/api/v1/auth/refresh', params: { refresh_token: 'valid_refresh_token' }
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['tokens']['id_token']).to eq('new_id_token')
+        expect(body['id_token']).to eq('new_id_token')
       end
     end
 
