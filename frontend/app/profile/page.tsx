@@ -28,18 +28,18 @@ const DUMMY_PROFILE: UserProfile = {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(DUMMY_PROFILE);
-  // userId が存在する場合のみ fetch するので、その時だけ loading=true で開始
+  // profile_id が存在する場合のみ fetch する
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("user_id") !== null;
+    return localStorage.getItem("profile_id") !== null;
   });
 
   useEffect(() => {
-    const userId =
-      typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
-    if (!userId) return;
+    const profileId =
+      typeof window !== "undefined" ? localStorage.getItem("profile_id") : null;
+    if (!profileId) return;
 
-    getProfile(Number(userId))
+    getProfile(Number(profileId))
       .then((data) => {
         setProfile({
           id: String(data.id),

@@ -21,6 +21,12 @@ module Api
             username: params[:username]
           )
 
+          profile = user.create_profile!(
+            display_name: params[:username],
+            age: 18,
+            gender: "other"
+          )
+
           tokens = cognito_service.sign_in(
             email: params[:email],
             password: params[:password]
@@ -28,6 +34,7 @@ module Api
 
           render json: {
             user: user_json(user),
+            profile_id: profile.id,
             id_token: tokens[:id_token],
             access_token: tokens[:access_token],
             refresh_token: tokens[:refresh_token]

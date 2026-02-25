@@ -46,6 +46,19 @@ export async function getProfile(id: number): Promise<Profile> {
 }
 
 /**
+ * プロフィール新規作成
+ * POST /api/v1/profiles
+ */
+export async function createProfile(
+  body: UpdateProfileRequest,
+): Promise<{ profile: Profile }> {
+  return apiClient<{ profile: Profile }>("/api/v1/profiles", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/**
  * プロフィール更新
  * PATCH /api/v1/profiles/:id
  */
