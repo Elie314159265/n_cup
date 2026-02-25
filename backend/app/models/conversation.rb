@@ -7,5 +7,5 @@ class Conversation < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
 
-  scope :active, -> { where(status: 'active') }
+  scope :active, -> { where(status: "active") }
 end

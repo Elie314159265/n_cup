@@ -9,7 +9,7 @@ module Auth
       payload = decode(token)
       return nil unless payload
 
-      cognito_sub = payload['sub']
+      cognito_sub = payload["sub"]
       User.find_by(cognito_sub: cognito_sub)
     end
   end

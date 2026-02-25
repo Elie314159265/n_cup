@@ -1,17 +1,17 @@
 module Ai
   class PollyService
     def initialize
-      @client = Aws::Polly::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
+      @client = Aws::Polly::Client.new(region: ENV["AWS_REGION"] || "ap-northeast-1")
       @s3_service = Storage::S3Service.new
     end
 
-    def synthesize_speech(text, voice_id: 'Mizuki', engine: 'neural')
+    def synthesize_speech(text, voice_id: "Mizuki", engine: "neural")
       response = @client.synthesize_speech({
         text: text,
         voice_id: voice_id,
-        output_format: 'mp3',
+        output_format: "mp3",
         engine: engine,
-        language_code: 'ja-JP'
+        language_code: "ja-JP"
       })
 
       # S3にアップロード

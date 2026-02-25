@@ -1,0 +1,38 @@
+# TargetGroupBinding - Terraformが作成したALBターゲットグループとk8s Serviceを紐付ける
+# AWS Load Balancer ControllerがPod IPの登録・解除を自動管理する
+#
+# 作成手順:
+#   1. Terraform outputからARNを取得:
+#        terraform output rails_api_target_group_arn
+#        terraform output action_cable_target_group_arn
+#   2. 下記プレースホルダーを置き換えてtargetgroupbinding.yamlとして保存
+#   3. kubectl apply -f k8s/targetgroupbinding.yaml
+#
+# 前提: AWS Load Balancer Controllerがインストール済みであること
+#   (aws-lbc-serviceaccount.yaml.example を参照)
+
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: rails-api-tgb
+  namespace: default
+spec:
+  serviceRef:
+    name: rails-api-service
+    port: 3000
+  targetGroupARN: <RAILS_API_TARGET_GROUP_ARN>
+  targetType: ip
+
+---
+
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: action-cable-tgb
+  namespace: default
+spec:
+  serviceRef:
+    name: action-cable-service
+    port: 28080
+  targetGroupARN: <ACTION_CABLE_TARGET_GROUP_ARN>
+  targetType: ip
