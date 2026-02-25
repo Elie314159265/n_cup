@@ -1,15 +1,15 @@
 module Api
   module V1
     class ConversationsController < ApplicationController
-      before_action :set_conversation, only: [:show, :end_conversation]
+      before_action :set_conversation, only: [ :show, :end_conversation ]
 
       # GET /api/v1/conversations
       def index
-        match_ids = Match.where('user_id_1 = ? OR user_id_2 = ?', current_user.id, current_user.id)
+        match_ids = Match.where("user_id_1 = ? OR user_id_2 = ?", current_user.id, current_user.id)
                          .pluck(:id)
 
         conversations = Conversation.where(match_id: match_ids)
-                                    .includes(match: [:user_1, :user_2])
+                                    .includes(match: [ :user_1, :user_2 ])
                                     .order(created_at: :desc)
 
         render json: { conversations: conversations.map { |c| conversation_json(c) } }
@@ -20,22 +20,22 @@ module Api
         match = Match.find(params[:match_id])
 
         unless match.user_1 == current_user || match.user_2 == current_user
-          return render json: { error: 'Forbidden' }, status: :forbidden
+          return render json: { error: "Forbidden" }, status: :forbidden
         end
 
-        unless match.status == 'matched'
-          return render json: { error: 'Match is not active' }, status: :unprocessable_entity
+        unless match.status == "matched"
+          return render json: { error: "Match is not active" }, status: :unprocessable_entity
         end
 
         conversation = Conversation.create!(
           match: match,
-          status: 'active',
+          status: "active",
           started_at: Time.current
         )
 
         render json: { conversation: conversation_json(conversation) }, status: :created
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Match not found' }, status: :not_found
+        render json: { error: "Match not found" }, status: :not_found
       end
 
       # GET /api/v1/conversations/:id
@@ -45,21 +45,21 @@ module Api
 
       # POST /api/v1/conversations/:id/end
       def end_conversation
-        unless @conversation.status == 'active'
-          return render json: { error: 'Conversation is already ended' }, status: :unprocessable_entity
+        unless @conversation.status == "active"
+          return render json: { error: "Conversation is already ended" }, status: :unprocessable_entity
         end
 
-        @conversation.update!(status: 'ended', ended_at: Time.current)
+        @conversation.update!(status: "ended", ended_at: Time.current)
         render json: { conversation: conversation_json(@conversation) }
       end
 
       private
 
       def set_conversation
-        match_ids = Match.where('user_id_1 = ? OR user_id_2 = ?', current_user.id, current_user.id).pluck(:id)
+        match_ids = Match.where("user_id_1 = ? OR user_id_2 = ?", current_user.id, current_user.id).pluck(:id)
         @conversation = Conversation.where(match_id: match_ids).find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Conversation not found' }, status: :not_found
+        render json: { error: "Conversation not found" }, status: :not_found
       end
 
       def conversation_json(conversation, include_messages: false)

@@ -11,7 +11,7 @@ module Api
       # PATCH /api/v1/users/:id
       def update
         unless @user == current_user
-          return render json: { error: 'Forbidden' }, status: :forbidden
+          return render json: { error: "Forbidden" }, status: :forbidden
         end
 
         if @user.update(user_params)
@@ -26,7 +26,7 @@ module Api
       def set_user
         @user = User.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'User not found' }, status: :not_found
+        render json: { error: "User not found" }, status: :not_found
       end
 
       def user_params

@@ -4,14 +4,14 @@ class ApplicationController < ActionController::API
   private
 
   def authenticate_user!
-    token = request.headers['Authorization']&.split(' ')&.last
+    token = request.headers["Authorization"]&.split(" ")&.last
     unless token
-      render json: { error: 'Unauthorized' }, status: :unauthorized and return
+      render json: { error: "Unauthorized" }, status: :unauthorized and return
     end
 
     @current_user = Auth::TokenService.extract_user_from_token(token)
     unless @current_user
-      render json: { error: 'Unauthorized' }, status: :unauthorized
+      render json: { error: "Unauthorized" }, status: :unauthorized
     end
   end
 

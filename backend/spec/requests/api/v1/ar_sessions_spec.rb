@@ -4,7 +4,7 @@ RSpec.describe 'Api::V1::ArSessions', type: :request do
   let(:user)         { create(:user) }
   let(:other_user)   { create(:user) }
   let!(:match) do
-    u1, u2 = [user, other_user].sort_by(&:id)
+    u1, u2 = [ user, other_user ].sort_by(&:id)
     create(:match, user_1: u1, user_2: u2)
   end
   let!(:conversation) { create(:conversation, match: match) }

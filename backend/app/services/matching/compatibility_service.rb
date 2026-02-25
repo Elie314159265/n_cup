@@ -57,11 +57,11 @@ module Matching
     def personality_compatibility_score
       # シンプルな相性マッピング
       compatibility_map = {
-        'friendly' => ['friendly', 'calm', 'cheerful'],
-        'calm' => ['calm', 'friendly', 'intellectual'],
-        'cheerful' => ['cheerful', 'friendly', 'active'],
-        'intellectual' => ['intellectual', 'calm', 'curious'],
-        'active' => ['active', 'cheerful', 'adventurous']
+        "friendly" => [ "friendly", "calm", "cheerful" ],
+        "calm" => [ "calm", "friendly", "intellectual" ],
+        "cheerful" => [ "cheerful", "friendly", "active" ],
+        "intellectual" => [ "intellectual", "calm", "curious" ],
+        "active" => [ "active", "cheerful", "adventurous" ]
       }
 
       p1 = @profile1.personality

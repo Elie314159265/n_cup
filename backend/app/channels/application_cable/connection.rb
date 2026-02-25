@@ -9,7 +9,7 @@ module ApplicationCable
     private
 
     def find_verified_user
-      token = request.params[:token] || request.headers['Authorization']&.split(' ')&.last
+      token = request.params[:token] || request.headers["Authorization"]&.split(" ")&.last
       user = Auth::TokenService.extract_user_from_token(token)
       user || reject_unauthorized_connection
     end

@@ -1,9 +1,9 @@
 module Auth
   class CognitoService
     def initialize
-      @client = Aws::CognitoIdentityProvider::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
-      @user_pool_id = ENV['COGNITO_USER_POOL_ID']
-      @client_id = ENV['COGNITO_CLIENT_ID']
+      @client = Aws::CognitoIdentityProvider::Client.new(region: ENV["AWS_REGION"] || "ap-northeast-1")
+      @user_pool_id = ENV["COGNITO_USER_POOL_ID"]
+      @client_id = ENV["COGNITO_CLIENT_ID"]
     end
 
     def sign_up(email:, password:, username:)
@@ -12,8 +12,8 @@ module Auth
         username: email,
         password: password,
         user_attributes: [
-          { name: 'email', value: email },
-          { name: 'preferred_username', value: username }
+          { name: "email", value: email },
+          { name: "preferred_username", value: username }
         ]
       })
 
@@ -25,11 +25,11 @@ module Auth
 
     def sign_in(email:, password:)
       response = @client.initiate_auth({
-        auth_flow: 'USER_PASSWORD_AUTH',
+        auth_flow: "USER_PASSWORD_AUTH",
         client_id: @client_id,
         auth_parameters: {
-          'USERNAME' => email,
-          'PASSWORD' => password
+          "USERNAME" => email,
+          "PASSWORD" => password
         }
       })
 
@@ -43,10 +43,10 @@ module Auth
 
     def refresh_token(refresh_token)
       response = @client.initiate_auth({
-        auth_flow: 'REFRESH_TOKEN_AUTH',
+        auth_flow: "REFRESH_TOKEN_AUTH",
         client_id: @client_id,
         auth_parameters: {
-          'REFRESH_TOKEN' => refresh_token
+          "REFRESH_TOKEN" => refresh_token
         }
       })
 

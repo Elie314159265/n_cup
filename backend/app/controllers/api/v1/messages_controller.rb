@@ -1,7 +1,7 @@
 module Api
   module V1
     class MessagesController < ApplicationController
-      before_action :set_conversation, only: [:index, :create]
+      before_action :set_conversation, only: [ :index, :create ]
 
       # GET /api/v1/conversations/:conversation_id/messages
       def index
@@ -14,13 +14,13 @@ module Api
 
       # POST /api/v1/conversations/:conversation_id/messages
       def create
-        unless @conversation.status == 'active'
-          return render json: { error: 'Conversation is ended' }, status: :unprocessable_entity
+        unless @conversation.status == "active"
+          return render json: { error: "Conversation is ended" }, status: :unprocessable_entity
         end
 
         message = @conversation.messages.create!(
           sender: current_user,
-          message_type: params[:message_type] || 'text',
+          message_type: params[:message_type] || "text",
           content: params[:content],
           metadata: params[:metadata]
         )
@@ -28,7 +28,7 @@ module Api
         # Action Cable でリアルタイム配信
         ActionCable.server.broadcast(
           "conversation_#{@conversation.id}",
-          { type: 'new_message', message: message_json(message) }
+          { type: "new_message", message: message_json(message) }
         )
 
         render json: { message: message_json(message) }, status: :created
@@ -42,22 +42,22 @@ module Api
 
         unless message.conversation.match.user_1 == current_user ||
                message.conversation.match.user_2 == current_user
-          return render json: { error: 'Forbidden' }, status: :forbidden
+          return render json: { error: "Forbidden" }, status: :forbidden
         end
 
         message.update!(read_at: Time.current)
         render json: { message: message_json(message) }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Message not found' }, status: :not_found
+        render json: { error: "Message not found" }, status: :not_found
       end
 
       private
 
       def set_conversation
-        match_ids = Match.where('user_id_1 = ? OR user_id_2 = ?', current_user.id, current_user.id).pluck(:id)
+        match_ids = Match.where("user_id_1 = ? OR user_id_2 = ?", current_user.id, current_user.id).pluck(:id)
         @conversation = Conversation.where(match_id: match_ids).find(params[:conversation_id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Conversation not found' }, status: :not_found
+        render json: { error: "Conversation not found" }, status: :not_found
       end
 
       def message_json(message)

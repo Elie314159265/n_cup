@@ -2,7 +2,7 @@ module Api
   module V1
     module Auth
       class AuthController < ApplicationController
-        skip_before_action :authenticate_user!, only: [:signup, :signin, :refresh]
+        skip_before_action :authenticate_user!, only: [ :signup, :signin, :refresh ]
 
         # POST /api/v1/auth/signup
         def signup
@@ -21,15 +21,15 @@ module Api
 
           render json: {
             user: user_json(user),
-            message: 'Signup successful. Please check your email for verification.'
+            message: "Signup successful. Please check your email for verification."
           }, status: :created
         rescue Aws::CognitoIdentityProvider::Errors::UsernameExistsException
-          render json: { error: 'Email already registered' }, status: :unprocessable_entity
+          render json: { error: "Email already registered" }, status: :unprocessable_entity
         rescue ActiveRecord::RecordInvalid => e
           render json: { error: e.message }, status: :unprocessable_entity
         rescue => e
           Rails.logger.error("Signup error: #{e.message}")
-          render json: { error: 'Signup failed' }, status: :internal_server_error
+          render json: { error: "Signup failed" }, status: :internal_server_error
         end
 
         # POST /api/v1/auth/signin
@@ -42,7 +42,7 @@ module Api
 
           user = User.find_by(email: params[:email])
           unless user
-            return render json: { error: 'User not found' }, status: :not_found
+            return render json: { error: "User not found" }, status: :not_found
           end
 
           render json: {
@@ -55,24 +55,24 @@ module Api
             }
           }
         rescue Aws::CognitoIdentityProvider::Errors::NotAuthorizedException
-          render json: { error: 'Invalid email or password' }, status: :unauthorized
+          render json: { error: "Invalid email or password" }, status: :unauthorized
         rescue Aws::CognitoIdentityProvider::Errors::UserNotConfirmedException
-          render json: { error: 'Email not verified' }, status: :forbidden
+          render json: { error: "Email not verified" }, status: :forbidden
         rescue => e
           Rails.logger.error("Signin error: #{e.message}")
-          render json: { error: 'Signin failed' }, status: :internal_server_error
+          render json: { error: "Signin failed" }, status: :internal_server_error
         end
 
         # POST /api/v1/auth/signout
         def signout
-          render json: { message: 'Signed out successfully' }
+          render json: { message: "Signed out successfully" }
         end
 
         # POST /api/v1/auth/refresh
         def refresh
           refresh_token = params[:refresh_token]
           unless refresh_token
-            return render json: { error: 'Refresh token is required' }, status: :bad_request
+            return render json: { error: "Refresh token is required" }, status: :bad_request
           end
 
           cognito_service = ::Auth::CognitoService.new
@@ -87,7 +87,7 @@ module Api
           }
         rescue => e
           Rails.logger.error("Token refresh error: #{e.message}")
-          render json: { error: 'Token refresh failed' }, status: :unauthorized
+          render json: { error: "Token refresh failed" }, status: :unauthorized
         end
 
         # GET /api/v1/auth/me

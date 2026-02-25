@@ -1,8 +1,8 @@
 module Api
   module V1
     class ArAvatarsController < ApplicationController
-      before_action :set_ar_avatar, only: [:show, :update, :destroy, :upload_model]
-      before_action :authorize_owner!, only: [:update, :destroy, :upload_model]
+      before_action :set_ar_avatar, only: [ :show, :update, :destroy, :upload_model ]
+      before_action :authorize_owner!, only: [ :update, :destroy, :upload_model ]
 
       # GET /api/v1/ar_avatars
       def index
@@ -35,13 +35,13 @@ module Api
       # DELETE /api/v1/ar_avatars/:id
       def destroy
         @ar_avatar.destroy!
-        render json: { message: 'AR Avatar deleted' }
+        render json: { message: "AR Avatar deleted" }
       end
 
       # POST /api/v1/ar_avatars/:id/upload_model
       def upload_model
         unless params[:model_file]
-          return render json: { error: 'Model file is required' }, status: :bad_request
+          return render json: { error: "Model file is required" }, status: :bad_request
         end
 
         s3_service = Storage::S3Service.new
@@ -51,7 +51,7 @@ module Api
         if model_url && @ar_avatar.update(model_url: model_url)
           render json: { model_url: model_url }
         else
-          render json: { error: 'Model upload failed' }, status: :internal_server_error
+          render json: { error: "Model upload failed" }, status: :internal_server_error
         end
       end
 
@@ -60,12 +60,12 @@ module Api
       def set_ar_avatar
         @ar_avatar = ArAvatar.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'AR Avatar not found' }, status: :not_found
+        render json: { error: "AR Avatar not found" }, status: :not_found
       end
 
       def authorize_owner!
         unless @ar_avatar.user == current_user
-          render json: { error: 'Forbidden' }, status: :forbidden
+          render json: { error: "Forbidden" }, status: :forbidden
         end
       end
 

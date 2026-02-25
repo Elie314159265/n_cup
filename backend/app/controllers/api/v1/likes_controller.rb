@@ -20,20 +20,20 @@ module Api
 
         render json: response_data, status: :created
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'User not found' }, status: :not_found
+        render json: { error: "User not found" }, status: :not_found
       rescue ActiveRecord::RecordInvalid => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # GET /api/v1/likes
       def index
-        likes = current_user.sent_likes.includes(:to_user => :profile)
+        likes = current_user.sent_likes.includes(to_user: :profile)
         render json: { likes: likes.map { |l| like_json(l) } }
       end
 
       # GET /api/v1/likes/received
       def received
-        likes = current_user.received_likes.includes(:from_user => :profile)
+        likes = current_user.received_likes.includes(from_user: :profile)
         render json: { likes: likes.map { |l| like_json(l, received: true) } }
       end
 

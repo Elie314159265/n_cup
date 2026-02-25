@@ -1,12 +1,12 @@
 module Storage
   class S3Service
     def initialize
-      @client = Aws::S3::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
-      @bucket = ENV['S3_BUCKET_NAME'] || 'link_persona-user-assets-production'
-      @cloudfront_domain = ENV['CLOUDFRONT_DOMAIN']
+      @client = Aws::S3::Client.new(region: ENV["AWS_REGION"] || "ap-northeast-1")
+      @bucket = ENV["S3_BUCKET_NAME"] || "link_persona-user-assets-production"
+      @cloudfront_domain = ENV["CLOUDFRONT_DOMAIN"]
     end
 
-    def upload(key, file_data, content_type: 'application/octet-stream')
+    def upload(key, file_data, content_type: "application/octet-stream")
       @client.put_object({
         bucket: @bucket,
         key: key,

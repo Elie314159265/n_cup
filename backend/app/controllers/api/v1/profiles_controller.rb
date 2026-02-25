@@ -1,8 +1,8 @@
 module Api
   module V1
     class ProfilesController < ApplicationController
-      before_action :set_profile, only: [:show, :update, :upload_avatar]
-      before_action :authorize_owner!, only: [:update, :upload_avatar]
+      before_action :set_profile, only: [ :show, :update, :upload_avatar ]
+      before_action :authorize_owner!, only: [ :update, :upload_avatar ]
 
       # GET /api/v1/profiles/:id
       def show
@@ -21,7 +21,7 @@ module Api
       # POST /api/v1/profiles/:id/avatar
       def upload_avatar
         unless params[:avatar]
-          return render json: { error: 'Avatar file is required' }, status: :bad_request
+          return render json: { error: "Avatar file is required" }, status: :bad_request
         end
 
         s3_service = Storage::S3Service.new
@@ -31,7 +31,7 @@ module Api
         if avatar_url && @profile.update(avatar_url: avatar_url)
           render json: { avatar_url: avatar_url }
         else
-          render json: { error: 'Avatar upload failed' }, status: :internal_server_error
+          render json: { error: "Avatar upload failed" }, status: :internal_server_error
         end
       end
 
@@ -40,12 +40,12 @@ module Api
       def set_profile
         @profile = Profile.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Profile not found' }, status: :not_found
+        render json: { error: "Profile not found" }, status: :not_found
       end
 
       def authorize_owner!
         unless @profile.user == current_user
-          render json: { error: 'Forbidden' }, status: :forbidden
+          render json: { error: "Forbidden" }, status: :forbidden
         end
       end
 

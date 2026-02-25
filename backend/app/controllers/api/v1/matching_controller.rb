@@ -4,7 +4,7 @@ module Api
       # GET /api/v1/discover
       def discover
         unless current_user.profile
-          return render json: { error: 'Please complete your profile first' }, status: :unprocessable_entity
+          return render json: { error: "Please complete your profile first" }, status: :unprocessable_entity
         end
 
         filters = {

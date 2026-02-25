@@ -4,7 +4,7 @@ RSpec.describe 'Api::V1::Matches', type: :request do
   let(:user)       { create(:user) }
   let(:other_user) { create(:user) }
   let!(:match) do
-    u1, u2 = [user, other_user].sort_by(&:id)
+    u1, u2 = [ user, other_user ].sort_by(&:id)
     create(:match, user_1: u1, user_2: u2)
   end
 
@@ -20,7 +20,7 @@ RSpec.describe 'Api::V1::Matches', type: :request do
     it '他人のマッチは含まれない' do
       third_user  = create(:user)
       fourth_user = create(:user)
-      u1, u2 = [third_user, fourth_user].sort_by(&:id)
+      u1, u2 = [ third_user, fourth_user ].sort_by(&:id)
       create(:match, user_1: u1, user_2: u2)
 
       get '/api/v1/matches', headers: auth_headers(user)

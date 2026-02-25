@@ -16,19 +16,19 @@ class ConversationChannel < ApplicationCable::Channel
   def send_message(data)
     conversation = find_authorized_conversation
     return unless conversation
-    return unless conversation.status == 'active'
+    return unless conversation.status == "active"
 
     message = conversation.messages.create!(
       sender: current_user,
-      message_type: data['message_type'] || 'text',
-      content: data['content'],
-      metadata: data['metadata']
+      message_type: data["message_type"] || "text",
+      content: data["content"],
+      metadata: data["metadata"]
     )
 
     ActionCable.server.broadcast(
       "conversation_#{conversation.id}",
       {
-        type: 'new_message',
+        type: "new_message",
         message: {
           id: message.id,
           sender_id: message.sender_id,
@@ -50,10 +50,10 @@ class ConversationChannel < ApplicationCable::Channel
     ActionCable.server.broadcast(
       "conversation_#{conversation.id}",
       {
-        type: 'ar_action',
+        type: "ar_action",
         user_id: current_user.id,
-        action: data['action'],
-        payload: data['payload']
+        action: data["action"],
+        payload: data["payload"]
       }
     )
   end
@@ -64,7 +64,7 @@ class ConversationChannel < ApplicationCable::Channel
     conversation_id = params[:conversation_id]
     return nil unless conversation_id
 
-    match_ids = Match.where('user_id_1 = ? OR user_id_2 = ?', current_user.id, current_user.id).pluck(:id)
+    match_ids = Match.where("user_id_1 = ? OR user_id_2 = ?", current_user.id, current_user.id).pluck(:id)
     Conversation.where(match_id: match_ids).find_by(id: conversation_id)
   end
 end
