@@ -18,19 +18,20 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  // profile_id が localStorage にある場合のみ初期ローディング
+  const [loading, setLoading] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("profile_id") !== null,
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const profileId =
       typeof window !== "undefined" ? localStorage.getItem("profile_id") : null;
-    if (!profileId) {
-      setLoading(false);
-      return;
-    }
+    if (!profileId) return;
 
-    setLoading(true);
     getProfile(Number(profileId))
       .then((data) => {
         setProfile({
@@ -43,14 +44,13 @@ export default function ProfilePage() {
           image: data.avatar_url ?? undefined,
         });
       })
-      .catch(() => {
-        setProfile(null);
-      })
+      .catch(() => setProfile(null))
       .finally(() => setLoading(false));
   }, [refreshKey]);
 
   const handleEditSuccess = () => {
     setIsEditing(false);
+    setLoading(true);
     setRefreshKey((k) => k + 1);
   };
 
