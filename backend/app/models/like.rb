@@ -8,6 +8,7 @@ class Like < ApplicationRecord
   private
 
   def cannot_like_self
+    return unless from_user_id.present? && to_user_id.present?
     errors.add(:to_user_id, "cannot like yourself") if from_user_id == to_user_id
   end
 end
