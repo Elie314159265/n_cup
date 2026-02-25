@@ -6,7 +6,6 @@ import { Header } from "@/components/common/Header";
 import { Navigation } from "@/components/common/Navigation";
 import Script from "next/script";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,12 +32,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
         suppressHydrationWarning
       >
-
         <Header />
         <main className="min-h-screen pb-20 md:pb-0">{children}</main>
         <Navigation />
-        <Script src="https://launchar.app/sdk/v1?key=1fKLxRkwDhlDqTTEhwQs2bboGFO372oa&redirect=true"></Script>
-
+        {/* Variant Launch AR SDK: iOSでのWebXR ARポリフィル。
+            ⚠️ ドメインエラーが出る場合は https://launchar.app のプロジェクト設定で
+               ngrok URL (*.ngrok-free.app 等) を Allowed Domains に追加してください */}
+        <Script src="https://launchar.app/sdk/v1?key=1fKLxRkwDhlDqTTEhwQs2bboGFO372oa&redirect=true" />
       </body>
     </html>
   );
