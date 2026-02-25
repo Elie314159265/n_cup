@@ -2,7 +2,7 @@ module Ai
   class BedrockService
     def initialize
       @client = Aws::BedrockRuntime::Client.new(region: ENV["AWS_REGION"] || "ap-northeast-1")
-      @model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+      @model_id = "apac.anthropic.claude-3-5-sonnet-20241022-v2:0"
     end
 
     # Chat with AI that impersonates a matched partner
