@@ -25,9 +25,14 @@ output "alb_dns_name" {
   value       = aws_lb.main.dns_name
 }
 
-output "cloudfront_domain" {
-  description = "CloudFront distribution domain"
+output "cloudfront_assets_domain" {
+  description = "CloudFront distribution domain for user assets"
   value       = aws_cloudfront_distribution.assets.domain_name
+}
+
+output "cloudfront_frontend_domain" {
+  description = "CloudFront distribution domain for frontend (also proxies /api/* and /cable* to ALB)"
+  value       = aws_cloudfront_distribution.frontend.domain_name
 }
 
 output "s3_bucket_assets" {
