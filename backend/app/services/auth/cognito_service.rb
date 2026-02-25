@@ -13,7 +13,7 @@ module Auth
         password: password,
         user_attributes: [
           { name: "email", value: email },
-          { name: "preferred_username", value: username }
+          { name: "custom:username", value: username }
         ]
       })
 
