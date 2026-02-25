@@ -1,4 +1,4 @@
-# yoku - AR×マッチングアプリ
+# LinkPersona - AR×マッチングアプリ
 
 **ARで理想の人とマッチング！気になる相手とARアバターでお話しよう**
 
@@ -6,9 +6,10 @@
 
 ## アプリ概要
 
+「共通の趣味がある友だちが欲しい」
 「気になる人と話してみたいけど、恥ずかしい...」
 
-そんなあなたに **yoku** は、マッチングした相手のAIアバターとリアルタイム音声会話ができる、次世代マッチングアプリです。相手のプロフィールを学習したAIが相手になりきって会話するので、実際に会う前に相手の雰囲気や相性を確認できます。
+そんなあなたに **LinkPersona** は、マッチングした相手のAIアバターとリアルタイム音声会話ができる、次世代マッチングアプリです。相手のプロフィールを学習したAIが相手になりきって会話するので、実際に会う前に相手の雰囲気や相性を確認できます。
 
 ### 主な特徴
 
@@ -30,7 +31,7 @@
 ### 2. プロフィール作成
 
 - 年齢、性別、趣味などの基本情報を入力
-- カップ数や性格タイプなど、詳細なプロフィールも設定可能
+- MBTIや性格タイプなど、詳細なプロフィールも設定可能
 - プロフィール画像をアップロード
 
 ### 3. ARアバター作成
@@ -41,7 +42,7 @@
   - 髪型・髪色
   - 肌の色
   - 服装スタイル
-  - 体型（カップ数含む）
+  - 体型
 
 - **声の設定**
   - Amazon Pollyの音声タイプを選択
@@ -49,7 +50,7 @@
 
 ### 4. マッチング候補を探す
 
-- Tinder風のスワイプUIで気になる相手を探す
+- スワイプUIで気になる相手を探す
 - 相性スコアが表示されるので参考に
 - フィルター機能で年齢、性別、趣味などを絞り込み
 - 気になる相手には「いいね」を送る
@@ -272,11 +273,11 @@ npm run dev
 
 #### Backend: `backend/.env`
 ```bash
-DATABASE_URL=mysql2://user:password@localhost:3306/yoku_development
+DATABASE_URL=mysql2://user:password@localhost:3306/link_persona_development
 REDIS_URL=redis://localhost:6379
-AWS_REGION=us-east-1
-S3_BUCKET_NAME=yoku-user-assets-production
-COGNITO_USER_POOL_ID=us-east-1_xxxxxxxxx
+AWS_REGION=ap-northeast-1
+S3_BUCKET_NAME=link_persona-user-assets-production
+COGNITO_USER_POOL_ID=ap-northeast-1_xxxxxxxxx
 COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxx
 ```
 
@@ -307,11 +308,11 @@ terraform apply -var="db_password=your-password"
 
 ```bash
 # EKS クラスタに接続
-aws eks update-kubeconfig --name yoku-cluster --region us-east-1
+aws eks update-kubeconfig --name link_persona-cluster --region ap-northeast-1
 
 # Secretsの作成
 kubectl create secret generic db-credentials \
-  --from-literal=url='mysql2://user:password@host:3306/yoku_production'
+  --from-literal=url='mysql2://user:password@host:3306/link_persona_production'
 
 kubectl create secret generic cognito-credentials \
   --from-literal=user_pool_id='xxx' \
@@ -341,7 +342,7 @@ cd frontend
 npm run build
 
 # S3にアップロード
-aws s3 sync out s3://yoku-frontend-production --delete
+aws s3 sync out s3://link_persona-frontend-production --delete
 
 # CloudFront キャッシュ無効化
 aws cloudfront create-invalidation \

@@ -20,8 +20,8 @@ terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/*.tfvars
 
-# Kubernetes secrets (DO NOT commit real secrets)
-k8s/secrets.yaml
+# Kubernetes - actual manifests contain sensitive info, use *.yaml.example instead
+k8s/*.yaml
 
 # IDE
 .vscode
