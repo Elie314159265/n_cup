@@ -34,7 +34,7 @@ export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
       setIsAnimating(false);
     }, 0);
 
-    const timer = setTimeout(() => {
+    const timer2 = setTimeout(() => {
       setIsResetting(false);
       setDragOffset({ x: 0, y: 0 }); // アニメーションしながら中央へ
     }, 50);
