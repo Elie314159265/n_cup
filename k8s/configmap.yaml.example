@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  redis_url: "redis://<REDIS_ENDPOINT>:6379"       # terraform output -raw redis_endpoint
+  s3_bucket_name: "link-persona-user-assets-production"
+  cloudfront_domain: "<CLOUDFRONT_DOMAIN>"          # terraform output cloudfront_domain

@@ -73,11 +73,11 @@ jobs:
       - name: Build and Push Docker image
         working-directory: backend
         run: |
-          docker build -t link_persona-api .
-          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
-          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
-          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
+          docker build -t link-persona-api .
+          docker tag link-persona-api:latest ${{ secrets.ECR_REGISTRY }}/link-persona-api:${{ github.sha }}
+          docker tag link-persona-api:latest ${{ secrets.ECR_REGISTRY }}/link-persona-api:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/link-persona-api:${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/link-persona-api:latest
 
   deploy:
     needs: build-and-push
@@ -94,16 +94,16 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name link_persona-cluster --region ap-northeast-1
+          aws eks update-kubeconfig --name link-persona-cluster --region ap-northeast-1
 
       - name: Deploy to EKS
         run: |
           kubectl set image deployment/rails-api \
-            rails=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+            rails=${{ secrets.ECR_REGISTRY }}/link-persona-api:${{ github.sha }}
           kubectl set image deployment/action-cable \
-            cable=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+            cable=${{ secrets.ECR_REGISTRY }}/link-persona-api:${{ github.sha }}
           kubectl set image deployment/sidekiq \
-            sidekiq=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+            sidekiq=${{ secrets.ECR_REGISTRY }}/link-persona-api:${{ github.sha }}
           kubectl rollout status deployment/rails-api
           kubectl rollout status deployment/action-cable
           kubectl rollout status deployment/sidekiq
