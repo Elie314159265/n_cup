@@ -20,8 +20,9 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchProfile = () => {
+  useEffect(() => {
     const profileId =
       typeof window !== "undefined" ? localStorage.getItem("profile_id") : null;
     if (!profileId) {
@@ -29,6 +30,7 @@ export default function ProfilePage() {
       return;
     }
 
+    setLoading(true);
     getProfile(Number(profileId))
       .then((data) => {
         setProfile({
@@ -45,16 +47,11 @@ export default function ProfilePage() {
         setProfile(null);
       })
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  }, [refreshKey]);
 
   const handleEditSuccess = () => {
     setIsEditing(false);
-    setLoading(true);
-    fetchProfile();
+    setRefreshKey((k) => k + 1);
   };
 
   if (loading) return <Loading message="プロフィールを読み込み中..." />;
