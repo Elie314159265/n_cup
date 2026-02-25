@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { User } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -78,10 +79,13 @@ export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
   const opacityLike = Math.min(Math.max(dragOffset.x / 100, 0), 1);
   const opacityPass = Math.min(Math.max(-dragOffset.x / 100, 0), 1);
 
+  const interestTags = profile.interests.split("・");
+
   return (
     <div
-      className="relative w-full h-96 bg-white rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
+      className="relative w-full rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none shadow-2xl"
       style={{
+        height: "500px",
         transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotate}deg)`,
         transition:
           dragStart || isResetting ? "none" : "transform 0.3s ease-out",
@@ -98,61 +102,84 @@ export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
       }
       onTouchEnd={handleEnd}
     >
-      {/* スタンプ */}
-      <div
-        className="absolute top-10 left-1/2 -translate-x-1/2 border-4 border-green-500 rounded-lg p-2 transform -rotate-12 z-10 pointer-events-none"
-        style={{ opacity: opacityLike }}
-      >
-        <span className="text-4xl font-bold text-green-500 uppercase">
-          LIKE
-        </span>
-      </div>
-      <div
-        className="absolute top-10 left-1/2 -translate-x-1/2 border-4 border-red-500 rounded-lg p-2 transform rotate-12 z-10 pointer-events-none"
-        style={{ opacity: opacityPass }}
-      >
-        <span className="text-4xl font-bold text-red-500 uppercase">爆破</span>
-      </div>
+      {/* 背景・画像エリア */}
+      {profile.image ? (
+        <Image
+          src={profile.image}
+          alt={profile.username}
+          fill
+          className="object-cover"
+          draggable={false}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-indigo-200 flex items-center justify-center">
+          <User size={80} className="text-white/60" />
+        </div>
+      )}
 
-      {/* プロフィール画像 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 pointer-events-none">
-        {profile.image ? (
-          <Image
-            src={profile.image}
-            alt={profile.username}
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-pink-300 to-purple-300 flex items-center justify-center">
-            <span className="text-6xl">👤</span>
-          </div>
-        )}
-      </div>
+      {/* グラデーションオーバーレイ */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-      {/* プロフィール情報 */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white pointer-events-none">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">{profile.username}</h2>
-            <p className="text-lg opacity-90">{profile.age}歳</p>
-            <p className="text-sm opacity-75 mt-2">{profile.interests}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm opacity-75">相性</p>
-            <p className="text-2xl font-bold text-pink-400">
-              {profile.compatibility}%
-            </p>
-          </div>
+      {/* 相性スコアバッジ（右上） */}
+      <div className="absolute top-4 right-4 z-10 pointer-events-none">
+        <div
+          className="backdrop-blur-sm rounded-2xl px-3 py-1.5 text-white font-bold text-sm"
+          style={{ background: "rgba(236,72,153,0.75)" }}
+        >
+          {profile.compatibility}% MATCH
         </div>
       </div>
 
-      {/* アクションボタン */}
+      {/* LIKE スタンプ */}
       <div
-        className="absolute top-4 right-4 flex gap-3"
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      ></div>
+        className="absolute top-10 left-6 border-4 border-emerald-400 rounded-xl px-3 py-1 transform -rotate-12 z-10 pointer-events-none"
+        style={{ opacity: opacityLike }}
+      >
+        <span className="text-3xl font-black text-emerald-400 uppercase tracking-wider">
+          LIKE
+        </span>
+      </div>
+
+      {/* 爆破スタンプ */}
+      <div
+        className="absolute top-10 right-6 border-4 border-rose-400 rounded-xl px-3 py-1 transform rotate-12 z-10 pointer-events-none"
+        style={{ opacity: opacityPass }}
+      >
+        <span className="text-3xl font-black text-rose-400 uppercase tracking-wider">
+          BOMB
+        </span>
+      </div>
+
+      {/* プロフィール情報（下部） */}
+      <div className="absolute bottom-0 left-0 right-0 p-5 pointer-events-none">
+        {/* 名前・年齢 */}
+        <div className="flex items-end justify-between mb-2">
+          <div>
+            <h2 className="text-2xl font-bold text-white leading-tight">
+              {profile.username}
+            </h2>
+            <p className="text-white/80 text-base font-medium">
+              {profile.age}歳
+            </p>
+          </div>
+        </div>
+
+        {/* インタレストタグ */}
+        <div className="flex flex-wrap gap-1.5">
+          {interestTags.map((tag, i) => (
+            <span
+              key={i}
+              className="text-xs font-medium text-white/90 rounded-full px-2.5 py-1"
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

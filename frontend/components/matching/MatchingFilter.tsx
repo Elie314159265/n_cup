@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { Search } from "lucide-react";
 
 interface MatchingFilterProps {
   onFilter: (filters: FilterOptions) => void;
@@ -42,7 +43,8 @@ export const MatchingFilter = ({ onFilter }: MatchingFilterProps) => {
   return (
     <div className="relative">
       <Button variant="secondary" onClick={() => setIsOpen(!isOpen)}>
-        🔍 フィルター
+        <Search size={14} className="mr-1.5" />
+        フィルター
       </Button>
 
       {isOpen && (
