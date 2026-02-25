@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Gltf, OrbitControls, Stage } from "@react-three/drei";
-import { Suspense, useRef, useState, useCallback } from "react";
+import { Suspense, useRef, useState, useCallback, useEffect } from "react";
 import {
   XR,
   createXRStore,
@@ -10,7 +10,14 @@ import {
   useXRHitTest,
   XRDomOverlay,
 } from "@react-three/xr";
+import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
+import { aiTranscribe, aiChat, aiSpeech } from "../../actions/ai";
+import { createArSession } from "../../actions/ar-sessions";
+import {
+  ActionCableClient,
+  type AiResponseChunk,
+} from "../../lib/websocket/cable";
 
 // ─── XRストア（emulate:false でVRエミュレーターを無効化） ──────────────────
 const store = createXRStore({ emulate: false });
@@ -24,60 +31,61 @@ const MODELS = [
 
 type ModelId = (typeof MODELS)[number]["id"];
 
-// ─── 事前に用意した音声ファイル (public/audio/ に配置) ───────────────────────
-const RESPONSE_AUDIO_FILES = [
-  "/audio/response_0.mp3",
-  "/audio/response_1.mp3",
-  "/audio/response_2.mp3",
-  "/audio/response_3.mp3",
-  "/audio/response_4.mp3",
-];
+// ─── 会話履歴エントリ ─────────────────────────────────────────────────────
+export type TranscriptEntry = {
+  role: "user" | "assistant";
+  text: string;
+};
 
 const _hitMatrix = new THREE.Matrix4();
 
-// ─── 音声会話フック ────────────────────────────────────────────────────────
-function useVoiceChat() {
+// ─── 音声会話フック（実API版） ────────────────────────────────────────────
+function useVoiceChat(arSessionId: number | null) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [audioVolume, setAudioVolume] = useState(0);
-  const [responseIndex, setResponseIndex] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
+  // Action Cable ストリーミング用のバッファ
+  const [streamingText, setStreamingText] = useState("");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const animFrameRef = useRef<number | null>(null);
+  const cableRef = useRef<ActionCableClient | null>(null);
 
-  const startRecording = useCallback(async () => {
-    if (isPlaying) return;
-    try {
-      setMicError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch {
-      setMicError("マイクの許可が必要です");
-    }
-  }, [isPlaying]);
+  // AiResponseChannel の WebSocket 購読
+  useEffect(() => {
+    if (!arSessionId) return;
+    const cable = new ActionCableClient();
+    cableRef.current = cable;
+    const unsub = cable.subscribe<AiResponseChunk>(
+      "AiResponseChannel",
+      { ar_session_id: arSessionId },
+      (chunk) => {
+        if (chunk.type === "ai_response_chunk" && chunk.text_chunk) {
+          setStreamingText((prev) => prev + chunk.text_chunk);
+        }
+        if (chunk.type === "ai_response_done") {
+          setStreamingText("");
+        }
+      },
+    );
+    return () => {
+      unsub();
+      cable.disconnect();
+    };
+  }, [arSessionId]);
 
-  const stopRecordingAndRespond = useCallback(() => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
-      mediaRecorderRef.current = null;
-    }
-    setIsRecording(false);
-
-    const idx = responseIndex;
-    const audioFile = RESPONSE_AUDIO_FILES[idx % RESPONSE_AUDIO_FILES.length];
-    const audio = new Audio(audioFile);
-
+  // 音量解析して再生する共通ヘルパー
+  const playAudioUrl = useCallback((url: string) => {
+    const audio = new Audio(url);
     let audioContext: AudioContext | null = null;
 
     const cleanup = () => {
       setIsPlaying(false);
       setAudioVolume(0);
-      setResponseIndex((i) => i + 1);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       audioContext?.close();
     };
@@ -108,13 +116,109 @@ function useVoiceChat() {
       audio.play().catch(cleanup);
       audio.onended = cleanup;
     }
-  }, [responseIndex]);
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (isPlaying || isProcessing) return;
+    try {
+      setMicError(null);
+      chunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch {
+      setMicError("マイクの許可が必要です");
+    }
+  }, [isPlaying, isProcessing]);
+
+  const stopRecordingAndRespond = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder) return;
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+
+    recorder.onstop = async () => {
+      setIsProcessing(true);
+      try {
+        // ── 1. 音声 → テキスト (Transcribe) ──────────────────────────────
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
+        const ext = recorder.mimeType.includes("mp4") ? "mp4" : "webm";
+        const audioFile = new File([blob], `voice.${ext}`, {
+          type: recorder.mimeType,
+        });
+
+        let userText: string;
+        try {
+          const result = await aiTranscribe(audioFile, "ja-JP");
+          userText = result.text;
+        } catch (e) {
+          console.error("[Transcribe]", e);
+          setMicError("音声認識に失敗しました");
+          return;
+        }
+        setTranscript((prev) => [...prev, { role: "user", text: userText }]);
+
+        // ── 2. テキスト → AI応答 (Bedrock) ───────────────────────────────
+        let aiText: string;
+        try {
+          if (!arSessionId) throw new Error("No arSessionId");
+          const result = await aiChat({
+            ar_session_id: arSessionId,
+            message: userText,
+          });
+          aiText = result.response.text;
+        } catch (e) {
+          console.error("[AiChat]", e);
+          setMicError("AI応答の取得に失敗しました");
+          return;
+        }
+        setTranscript((prev) => [...prev, { role: "assistant", text: aiText }]);
+
+        // ── 3. テキスト → 音声 (Polly) ───────────────────────────────────
+        let audioUrl: string;
+        try {
+          const result = await aiSpeech({
+            text: aiText,
+            voice_id: "Mizuki",
+            engine: "neural",
+          });
+          audioUrl = result.audio_url;
+        } catch (e) {
+          console.error("[AiSpeech]", e);
+          setMicError("音声合成に失敗しました");
+          return;
+        }
+
+        // ── 4. 音声再生 ───────────────────────────────────────────────────
+        playAudioUrl(audioUrl);
+      } catch (e) {
+        console.error("[VoiceChat]", e);
+        setMicError("エラーが発生しました");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    recorder.stop();
+    recorder.stream.getTracks().forEach((t) => t.stop());
+  }, [arSessionId, playAudioUrl]);
 
   return {
     isRecording,
     isPlaying,
+    isProcessing,
     audioVolume,
     micError,
+    transcript,
+    streamingText,
     startRecording,
     stopRecordingAndRespond,
   };
@@ -148,8 +252,11 @@ function ARPlacementModel({
   setSelectedModel,
   isRecording,
   isPlaying,
+  isProcessing,
   audioVolume,
   micError,
+  transcript,
+  streamingText,
   onStartRecording,
   onStopRecording,
 }: {
@@ -158,8 +265,11 @@ function ARPlacementModel({
   setSelectedModel: (id: ModelId) => void;
   isRecording: boolean;
   isPlaying: boolean;
+  isProcessing: boolean;
   audioVolume: number;
   micError: string | null;
+  transcript: TranscriptEntry[];
+  streamingText: string;
   onStartRecording: () => void;
   onStopRecording: () => void;
 }) {
@@ -322,13 +432,75 @@ function ARPlacementModel({
             >
               {isPlaying
                 ? "💬 相手が話しています..."
-                : isRecording
-                  ? "🎤 話してください..."
-                  : "押して話す"}
+                : isProcessing
+                  ? "⏳ 処理中..."
+                  : isRecording
+                    ? "🎤 話してください..."
+                    : "押して話す"}
             </div>
 
             {/* 再生中の音量波形 */}
             {isPlaying && <WaveformBars volume={audioVolume} />}
+
+            {/* 会話履歴パネル */}
+            {(transcript.length > 0 || streamingText) && (
+              <div
+                style={{
+                  maxHeight: 200,
+                  overflowY: "auto",
+                  width: "min(360px, 88vw)",
+                  background: "rgba(0,0,0,0.65)",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  backdropFilter: "blur(10px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {transcript.map((entry, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      color: entry.role === "user" ? "#c4b5fd" : "#e5e7eb",
+                      fontSize: 13,
+                      textAlign: entry.role === "user" ? "right" : "left",
+                    }}
+                  >
+                    <span
+                      style={{
+                        background:
+                          entry.role === "user"
+                            ? "rgba(124,58,237,0.45)"
+                            : "rgba(255,255,255,0.12)",
+                        padding: "4px 10px",
+                        borderRadius: 8,
+                        display: "inline-block",
+                        maxWidth: "90%",
+                      }}
+                    >
+                      {entry.text}
+                    </span>
+                  </div>
+                ))}
+                {streamingText && (
+                  <div style={{ color: "#e5e7eb", fontSize: 13 }}>
+                    <span
+                      style={{
+                        background: "rgba(255,255,255,0.12)",
+                        padding: "4px 10px",
+                        borderRadius: 8,
+                        display: "inline-block",
+                        maxWidth: "90%",
+                      }}
+                    >
+                      {streamingText}
+                      <span style={{ opacity: 0.6 }}>▌</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* マイクボタン */}
             <button
@@ -337,14 +509,14 @@ function ARPlacementModel({
               onPointerLeave={() => {
                 if (isRecording) onStopRecording();
               }}
-              disabled={isPlaying}
+              disabled={isPlaying || isProcessing}
               style={{
                 width: 80,
                 height: 80,
                 borderRadius: "50%",
                 background: isRecording
                   ? "#ef4444"
-                  : isPlaying
+                  : isPlaying || isProcessing
                     ? "#6b7280"
                     : "#7c3aed",
                 border: isRecording
@@ -352,7 +524,7 @@ function ARPlacementModel({
                   : "4px solid rgba(255,255,255,0.25)",
                 color: "#fff",
                 fontSize: 32,
-                cursor: isPlaying ? "not-allowed" : "pointer",
+                cursor: isPlaying || isProcessing ? "not-allowed" : "pointer",
                 boxShadow: isRecording
                   ? "0 0 0 14px rgba(239,68,68,0.2), 0 4px 24px rgba(0,0,0,0.4)"
                   : "0 4px 24px rgba(0,0,0,0.4)",
@@ -364,7 +536,7 @@ function ARPlacementModel({
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              🎤
+              {isProcessing ? "⏳" : "🎤"}
             </button>
 
             {/* エラー表示 */}
@@ -413,8 +585,11 @@ function SceneContent({
           setSelectedModel={setSelectedModel}
           isRecording={voiceChat.isRecording}
           isPlaying={voiceChat.isPlaying}
+          isProcessing={voiceChat.isProcessing}
           audioVolume={voiceChat.audioVolume}
           micError={voiceChat.micError}
+          transcript={voiceChat.transcript}
+          streamingText={voiceChat.streamingText}
           onStartRecording={voiceChat.startRecording}
           onStopRecording={voiceChat.stopRecordingAndRespond}
         />
@@ -442,12 +617,40 @@ function SceneContent({
   );
 }
 
-// ─── ページ ───────────────────────────────────────────────────────────────
-export default function ArPage() {
+// ─── ページ内部（useSearchParams使用） ────────────────────────────────────
+function ArPageInner() {
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("conversation_id");
+  const arSessionIdParam = searchParams.get("ar_session_id");
+
   const [selectedModel, setSelectedModel] = useState<ModelId>("nimo_anime");
   const [arError, setArError] = useState<string | null>(null);
+  const [arSessionId, setArSessionId] = useState<number | null>(
+    arSessionIdParam ? Number(arSessionIdParam) : null,
+  );
+  const [sessionError, setSessionError] = useState<string | null>(() =>
+    !arSessionIdParam && !conversationId
+      ? "conversation_id が指定されていません。マッチング画面から再度お試しください。"
+      : null,
+  );
+
   const modelSrc = MODELS.find((m) => m.id === selectedModel)!.src;
-  const voiceChat = useVoiceChat();
+  const voiceChat = useVoiceChat(arSessionId);
+
+  // conversationId があれば ARセッションを自動作成
+  useEffect(() => {
+    if (arSessionId || !conversationId) return;
+    createArSession({
+      conversation_id: Number(conversationId),
+      environment_type: "ar",
+    })
+      .then((res) => setArSessionId(res.ar_session.id))
+      .catch(() =>
+        setSessionError(
+          "ARセッションの作成に失敗しました。再読み込みしてください。",
+        ),
+      );
+  }, [arSessionId, conversationId]);
 
   const handleEnterAR = async () => {
     setArError(null);
@@ -549,7 +752,7 @@ export default function ArPage() {
       </button>
 
       {/* エラーメッセージ */}
-      {arError && (
+      {(arError || sessionError) && (
         <div
           style={{
             position: "fixed",
@@ -566,9 +769,35 @@ export default function ArPage() {
             textAlign: "center",
           }}
         >
-          {arError}
+          {arError ?? sessionError}
         </div>
       )}
     </div>
+  );
+}
+
+// ─── ページ（Suspenseラッパー） ────────────────────────────────────────────
+export default function ArPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            background: "#0a0a0a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontSize: 18,
+          }}
+        >
+          読み込み中...
+        </div>
+      }
+    >
+      <ArPageInner />
+    </Suspense>
   );
 }
