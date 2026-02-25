@@ -131,8 +131,6 @@ resource "aws_cloudfront_distribution" "frontend" {
       query_string = true
       headers = [
         "Authorization",
-        "Upgrade",
-        "Connection",
         "Sec-WebSocket-Key",
         "Sec-WebSocket-Version",
         "Sec-WebSocket-Protocol",
