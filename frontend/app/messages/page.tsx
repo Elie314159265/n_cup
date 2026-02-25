@@ -6,6 +6,8 @@ import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
+import { getMatches } from "@/actions/matching";
+import { getConversations } from "@/actions/conversations";
 
 interface LikedUser {
   id: string;
@@ -56,11 +58,39 @@ export default function MessagesPage() {
   const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
     null,
   );
+  const [conversationIds, setConversationIds] = useState<string[]>([]);
 
   useEffect(() => {
-    // ローカルストレージからいいねしたユーザーを取得
+    // ローカルストレージからいいねしたユーザーを取得（デモ用フォールバック）
     const users = JSON.parse(localStorage.getItem("likedUsers") || "[]");
     setTimeout(() => setLikedUsers(users), 0);
+
+    // マッチング一覧を取得
+    getMatches()
+      .then(({ matches }) => {
+        // matched済みのユーザーをマッチング待ちリストに追加
+        const matchedUsers: LikedUser[] = matches.map((m) => ({
+          id: String(m.matched_user.id),
+          username:
+            m.matched_user.profile?.display_name ?? m.matched_user.username,
+          image: m.matched_user.profile?.avatar_url ?? undefined,
+        }));
+        if (matchedUsers.length > 0) setLikedUsers(matchedUsers);
+      })
+      .catch(() => {
+        // バックエンド未対応のためスキップ
+      });
+
+    // 会話一覧を取得
+    getConversations()
+      .then(({ conversations }) => {
+        if (conversations.length > 0) {
+          setConversationIds(conversations.map((c) => String(c.id)));
+        }
+      })
+      .catch(() => {
+        // バックエンド未対応のためスキップ
+      });
   }, []);
 
   const handleApprove = (id: string) => {

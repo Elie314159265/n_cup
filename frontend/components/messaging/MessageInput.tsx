@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { sendMessage } from "@/actions/conversations";
 
 interface MessageInputProps {
   conversationId: string;
@@ -17,22 +18,12 @@ export const MessageInput = ({ conversationId, onSend }: MessageInputProps) => {
 
     setSending(true);
     try {
-      const response = await fetch(
-        `/api/v1/conversations/${conversationId}/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: message,
-            type: "text",
-          }),
-        }
-      );
-
-      if (response.ok) {
-        onSend?.(message);
-        setMessage("");
-      }
+      await sendMessage(Number(conversationId), {
+        message_type: "text",
+        content: message,
+      });
+      onSend?.(message);
+      setMessage("");
     } catch (error) {
       console.error("メッセージ送信エラー:", error);
     } finally {

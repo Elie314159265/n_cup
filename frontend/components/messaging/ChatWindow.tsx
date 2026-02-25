@@ -5,6 +5,7 @@ import Image from "next/image";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Loading } from "@/components/common/Loading";
+import { getConversation } from "@/actions/conversations";
 
 interface Conversation {
   id: string;
@@ -29,9 +30,17 @@ export const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   useEffect(() => {
     const fetchConversation = async () => {
       try {
-        const response = await fetch(`/api/v1/conversations/${conversationId}`);
-        const data = await response.json();
-        setConversation(data);
+        const { conversation: conv } = await getConversation(
+          Number(conversationId),
+        );
+        setConversation({
+          id: String(conv.id),
+          otherUser: {
+            id: String(conv.match_id),
+            username: `ユーザー ${conv.match_id}`,
+          },
+          unreadCount: 0,
+        });
       } catch (error) {
         console.error("会話取得エラー:", error);
       } finally {

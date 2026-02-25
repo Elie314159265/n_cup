@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { signIn } from "@/actions/auth";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -19,6 +20,12 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     setError("");
 
     try {
+      const data = await signIn({ email, password });
+      // トークンとユーザー情報をlocalStorageに保存
+      localStorage.setItem("id_token", data.id_token);
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("user_id", String(data.user.id));
+      localStorage.setItem("username", data.user.username);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ログインエラー");

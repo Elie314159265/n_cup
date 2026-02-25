@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { updateProfile } from "@/actions/users";
+import type { Gender } from "@/types/user";
 
 interface ProfileSetupProps {
   onSuccess?: () => void;
@@ -34,6 +36,28 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
+      const userId =
+        typeof window !== "undefined"
+          ? Number(localStorage.getItem("user_id"))
+          : null;
+      const username =
+        typeof window !== "undefined"
+          ? (localStorage.getItem("username") ?? "")
+          : "";
+
+      if (userId) {
+        await updateProfile(userId, {
+          display_name: username,
+          bio: formData.bio,
+          age: Number(formData.age),
+          gender: formData.gender as Gender,
+          personality: formData.mbti,
+          interests: formData.interests
+            ? formData.interests.split(",").map((s) => s.trim())
+            : [],
+          preferences: { occupation: formData.occupation },
+        });
+      }
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");

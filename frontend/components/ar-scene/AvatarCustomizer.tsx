@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
 import { AvatarViewer } from "./AvatarViewer";
+import {
+  createArAvatar,
+  updateArAvatar,
+  getArAvatars,
+} from "@/actions/ar-avatars";
 
 interface AvatarCustomizerProps {
   onSave?: (avatarData: AvatarConfig) => void;
@@ -35,6 +40,32 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      const customization = {
+        hairStyle: avatar.hairStyle,
+        hairColor: avatar.hairColor,
+        skinColor: avatar.skinColor,
+        clothing: avatar.clothing,
+        bodyType: avatar.bodyType,
+      };
+
+      // 既存のアバターを確認し、あれば更新、なければ新規作成
+      const existing = await getArAvatars().catch(() => []);
+      if (existing.length > 0) {
+        await updateArAvatar(existing[0].id, {
+          voice_id: avatar.voiceType,
+          customization,
+        });
+      } else {
+        const created = await createArAvatar({
+          name: "My Avatar",
+          voice_id: avatar.voiceType,
+          customization,
+        });
+        localStorage.setItem("ar_avatar_id", String(created.id));
+      }
+      onSave?.(avatar);
+    } catch {
+      // バックエンド未対応のためスキップ
       onSave?.(avatar);
     } finally {
       setLoading(false);

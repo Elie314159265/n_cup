@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
+import { getProfile } from "@/actions/users";
 
 interface UserProfile {
   id: string;
@@ -15,9 +16,44 @@ interface UserProfile {
   image?: string;
 }
 
+const DUMMY_PROFILE: UserProfile = {
+  id: "1",
+  username: "あなたのユーザー名",
+  age: 25,
+  gender: "未設定",
+  bio: "よろしくお願いします！",
+  interests: "読書・映画・旅行",
+  cupSize: "B",
+};
+
 export default function ProfilePage() {
-  const [profile] = useState<UserProfile | null>(null);
-  const [loading] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(DUMMY_PROFILE);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const userId =
+      typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+    if (!userId) return;
+
+    setLoading(true);
+    getProfile(Number(userId))
+      .then((data) => {
+        setProfile({
+          id: String(data.id),
+          username: data.display_name,
+          age: data.age,
+          gender: data.gender,
+          bio: data.bio ?? "",
+          interests: data.interests?.join("・") ?? "",
+          cupSize: data.cup_size ?? "B",
+          image: data.avatar_url ?? undefined,
+        });
+      })
+      .catch(() => {
+        // バックエンド未対応のためダミーデータを使用
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   if (loading) return <Loading message="プロフィールを読み込み中..." />;
 

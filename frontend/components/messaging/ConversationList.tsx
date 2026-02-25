@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
+import { getConversations } from "@/actions/conversations";
 
 interface ConversationItem {
   id: string;
@@ -23,8 +24,29 @@ interface ConversationListProps {
 export const ConversationList = ({
   onSelectConversation,
 }: ConversationListProps) => {
-  const [conversations] = useState<ConversationItem[]>([]);
-  const [loading] = useState(false);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    getConversations()
+      .then(({ conversations: convs }) => {
+        setConversations(
+          convs.map((c) => ({
+            id: String(c.id),
+            otherUser: {
+              id: String(c.match_id),
+              username: `ユーザー ${c.match_id}`,
+            },
+            unreadCount: 0,
+          })),
+        );
+      })
+      .catch(() => {
+        // バックエンド未対応のためスキップ
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   if (loading) return <Loading message="メッセージを読み込み中..." />;
 
