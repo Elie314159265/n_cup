@@ -2,10 +2,19 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: "export", // Static export for S3/CloudFront hosting
+  output: "export",
   images: {
     unoptimized: true,
-    domains: ["xxx.cloudfront.net"], // Replace with actual CloudFront domain
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "xxx.cloudfront.net",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
   },
   transpilePackages: ["three"],
 };
