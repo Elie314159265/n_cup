@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
 import { SwipeCard } from "@/components/matching/SwipeCard";
+import { Explosion } from "@/components/discover/bomb/Explosion";
 import {
   MatchingFilter,
   FilterOptions,
@@ -63,6 +65,7 @@ export default function DiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [showExplosion, setShowExplosion] = useState(false);
 
   // マッチング候補を取得（バックエンド対応後に実データが入る）
   useEffect(() => {
@@ -115,11 +118,24 @@ export default function DiscoverPage() {
 
   const handlePass = () => {
     console.log("Passed:", profiles[currentIndex].username);
+    setShowExplosion(true);
+  };
+
+  const handleExplosionComplete = () => {
+    setShowExplosion(false);
     setCurrentIndex((prev) => prev + 1);
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* 爆発エフェクト（左スワイプ時） */}
+      {showExplosion && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <Canvas>
+            <Explosion onComplete={handleExplosionComplete} />
+          </Canvas>
+        </div>
+      )}
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           気になる相手を探す
