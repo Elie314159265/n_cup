@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import { MatchingFilter } from "@/components/matching/MatchingFilter";
+import { Modal } from "@/components/common/Modal";
+import { Button } from "@/components/common/Button";
 
 interface Profile {
   id: string;
@@ -54,13 +56,28 @@ const DUMMY_PROFILES: Profile[] = [
 export default function DiscoverPage() {
   const [filters, setFilters] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleFilter = (newFilters: any) => {
     setFilters(newFilters);
   };
 
   const handleLike = () => {
-    console.log("Liked:", DUMMY_PROFILES[currentIndex].username);
+    setIsModalOpen(true);
+  };
+
+  const handleSendRequest = () => {
+    const profile = DUMMY_PROFILES[currentIndex];
+    // ローカルストレージに保存（デモ用）
+    const likedUsers = JSON.parse(localStorage.getItem("likedUsers") || "[]");
+    if (!likedUsers.find((u: Profile) => u.id === profile.id)) {
+      likedUsers.push({ ...profile, message });
+      localStorage.setItem("likedUsers", JSON.stringify(likedUsers));
+    }
+    console.log("Liked:", profile.username, "Message:", message);
+    setMessage("");
+    setIsModalOpen(false);
     setCurrentIndex((prev) => prev + 1);
   };
 
@@ -89,15 +106,25 @@ export default function DiscoverPage() {
       <div className="flex flex-col items-center gap-6">
         {currentIndex < DUMMY_PROFILES.length ? (
           <>
-            <div className="w-full max-w-sm">
+            <div className="relative w-full max-w-sm">
               <SwipeCard
                 profile={DUMMY_PROFILES[currentIndex]}
                 onLike={handleLike}
                 onPass={handlePass}
               />
             </div>
-            <div className="text-sm text-gray-500">
-              {currentIndex + 1} / {DUMMY_PROFILES.length}
+            <div className="flex items-center justify-between w-full max-w-xs px-4">
+              <div className="flex flex-col items-center opacity-60">
+                <span className="text-3xl font-bold text-red-500">←</span>
+                <span className="text-xs font-bold text-red-500">爆破</span>
+              </div>
+              <div className="text-sm text-gray-500 font-medium">
+                {currentIndex + 1} / {DUMMY_PROFILES.length}
+              </div>
+              <div className="flex flex-col items-center opacity-60">
+                <span className="text-3xl font-bold text-green-500">→</span>
+                <span className="text-xs font-bold text-green-500">LIKE</span>
+              </div>
             </div>
           </>
         ) : (
@@ -112,6 +139,27 @@ export default function DiscoverPage() {
           </div>
         )}
       </div>
+
+      {/* メッセージ入力モーダル */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleSendRequest}
+        title="メッセージを送信"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">相手に一言メッセージを送りましょう！</p>
+          <textarea
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            rows={4}
+            placeholder="例：はじめまして！趣味が合いそうなのでお話ししたいです。"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <Button onClick={handleSendRequest} className="w-full">
+            マッチング依頼送信
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

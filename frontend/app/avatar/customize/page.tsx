@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AvatarCustomizer } from "@/components/ar/AvatarCustomizer";
+import { AvatarCustomizer } from "@/components/ar-scene/AvatarCustomizer";
 
 export default function AvatarCustomizePage() {
   const router = useRouter();

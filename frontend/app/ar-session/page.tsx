@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
-import { AREnvironmentSelector } from "@/components/ar/AREnvironmentSelector";
-import { AvatarViewer } from "@/components/ar/AvatarViewer";
+import { AREnvironmentSelector } from "@/components/ar-scene/AREnvironmentSelector";
+import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
 import { Loading } from "@/components/common/Loading";
 
 export default function ARSessionPage() {
