@@ -41,15 +41,17 @@ export const VoiceChatInterface = ({
   const processAiResponse = useCallback(
     async (userText: string) => {
       setStep("thinking");
-      setInterimTranscript("");
 
       try {
+        console.log("[VoiceChat] ユーザー発言:", userText);
+
         // Bedrock でAI応答生成
         const chatRes = await aiChat({
           ar_session_id: arSessionId,
           message: userText,
         });
         const aiText = chatRes.response.text;
+        console.log("[VoiceChat] AI応答:", aiText);
 
         // 音声合成（失敗しても会話は続ける）
         let audioUrl: string | null = null;
@@ -60,11 +62,14 @@ export const VoiceChatInterface = ({
             engine: "neural",
           });
           audioUrl = speechRes.audio_url;
+          console.log("[VoiceChat] 音声URL:", audioUrl);
         } catch {
           // Polly失敗 → テキストのみ表示
+          console.warn("[VoiceChat] Polly音声合成失敗 → テキストのみ表示");
         }
 
         setHistory((prev) => [...prev, { user: userText, ai: aiText }]);
+        setInterimTranscript("");
 
         if (audioUrl) {
           setStep("speaking");
@@ -199,9 +204,11 @@ export const VoiceChatInterface = ({
       </div>
 
       {/* リアルタイム文字起こし（listening中） */}
-      {step === "listening" && interimTranscript && (
+      {(step === "listening" || step === "thinking") && interimTranscript && (
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-          <p className="text-xs text-blue-700 mb-1">あなた（認識中）</p>
+          <p className="text-xs text-blue-700 mb-1">
+            {step === "listening" ? "あなた（認識中）" : "あなた"}
+          </p>
           <p className="text-gray-800 text-sm">{interimTranscript}</p>
         </div>
       )}

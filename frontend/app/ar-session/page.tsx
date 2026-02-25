@@ -8,7 +8,7 @@ import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
 import { getConversation } from "@/actions/conversations";
 import { getMatches } from "@/actions/matching";
 import { createArSession } from "@/actions/ar-sessions";
-import type { Profile } from "@/types/user";
+import type { MatchPartner } from "@/types/matching";
 import type { ArSession } from "@/types/ar-session";
 
 function ARSessionContent() {
@@ -17,7 +17,7 @@ function ARSessionContent() {
   const conversationIdStr = searchParams.get("conversation_id");
   const conversationId = conversationIdStr ? parseInt(conversationIdStr, 10) : null;
 
-  const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
+  const [partnerProfile, setPartnerProfile] = useState<MatchPartner | null>(null);
   const [arSession, setArSession] = useState<ArSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -40,7 +40,7 @@ function ARSessionContent() {
 
         const match = matches.find((m) => m.id === conversation.match_id);
         if (match) {
-          setPartnerProfile(match.matched_user.profile);
+          setPartnerProfile(match.partner);
         }
       } catch {
         setLoadError("会話情報の取得に失敗しました");
@@ -100,7 +100,7 @@ function ARSessionContent() {
           </h1>
           <p className="text-gray-600">
             環境を選んで、
-            {partnerProfile ? partnerProfile.display_name : "AIアバター"}
+            {partnerProfile?.display_name ?? "AIアバター"}
             との会話を開始しましょう
           </p>
         </div>
