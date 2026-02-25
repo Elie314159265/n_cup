@@ -1,24 +1,92 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
 import { AREnvironmentSelector } from "@/components/ar-scene/AREnvironmentSelector";
 import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
+import { getConversation } from "@/actions/conversations";
+import { getMatches } from "@/actions/matching";
+import { createArSession } from "@/actions/ar-sessions";
+import type { Profile } from "@/types/user";
+import type { ArSession } from "@/types/ar-session";
 
 function ARSessionContent() {
   const searchParams = useSearchParams();
-  const conversationId = searchParams.get("conversation_id");
-  const arSessionId = conversationId ? `session-${conversationId}` : null;
-  const [_selectedEnvironment, setSelectedEnvironment] =
-    useState<string>("cafe");
+  const router = useRouter();
+  const conversationIdStr = searchParams.get("conversation_id");
+  const conversationId = conversationIdStr ? parseInt(conversationIdStr, 10) : null;
+
+  const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
+  const [arSession, setArSession] = useState<ArSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [isStarted, setIsStarted] = useState(false);
-  const [partnerName] = useState("AIアバター");
+
+  // 会話データとパートナープロフィールを取得
+  useEffect(() => {
+    if (!conversationId) {
+      setIsLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const [{ conversation }, { matches }] = await Promise.all([
+          getConversation(conversationId),
+          getMatches(),
+        ]);
+
+        const match = matches.find((m) => m.id === conversation.match_id);
+        if (match) {
+          setPartnerProfile(match.matched_user.profile);
+        }
+      } catch {
+        setLoadError("会話情報の取得に失敗しました");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [conversationId]);
+
+  const handleEnvironmentSelect = async (envId: string) => {
+    if (!conversationId) return;
+    setIsCreatingSession(true);
+    try {
+      const { ar_session } = await createArSession({
+        conversation_id: conversationId,
+        environment_type: envId,
+      });
+      setArSession(ar_session);
+      setIsStarted(true);
+    } catch {
+      setLoadError("ARセッションの作成に失敗しました");
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
 
   if (!conversationId) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center text-gray-600">
         会話が見つかりません
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center text-red-600">
+        {loadError}
       </div>
     );
   }
@@ -31,19 +99,25 @@ function ARSessionContent() {
             AR空間での会話
           </h1>
           <p className="text-gray-600">
-            環境を選んで、AIアバターとの会話を開始しましょう
+            環境を選んで、
+            {partnerProfile ? partnerProfile.display_name : "AIアバター"}
+            との会話を開始しましょう
           </p>
         </div>
 
-        <AREnvironmentSelector
-          onSelect={(envId) => {
-            setSelectedEnvironment(envId);
-            setIsStarted(true);
-          }}
-        />
+        {isCreatingSession ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+          </div>
+        ) : (
+          <AREnvironmentSelector onSelect={handleEnvironmentSelect} />
+        )}
       </div>
     );
   }
+
+  const partnerName = partnerProfile?.display_name ?? "AIアバター";
+  const partnerVoiceId = partnerProfile?.gender === "male" ? "Takumi" : "Mizuki";
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -68,10 +142,13 @@ function ARSessionContent() {
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">会話</h2>
           <div className="bg-white rounded-lg shadow-lg p-6">
-            {arSessionId && (
+            {arSession && (
               <VoiceChatInterface
-                arSessionId={arSessionId}
+                arSessionId={arSession.session_token}
                 partnerName={partnerName}
+                partnerVoiceId={partnerVoiceId}
+                conversationId={conversationId}
+                onEnd={() => router.push("/matches")}
               />
             )}
           </div>
