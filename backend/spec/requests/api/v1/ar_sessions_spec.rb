@@ -22,12 +22,14 @@ RSpec.describe 'Api::V1::ArSessions', type: :request do
       expect(body['ar_session']['environment_type']).to eq('cafe')
     end
 
-    it '同一会話に2つ目のARセッションは422' do
-      create(:ar_session, conversation: conversation)
+    it '同一会話にARセッションが既存の場合は200で既存セッションを返す' do
+      existing = create(:ar_session, conversation: conversation)
       post '/api/v1/ar_sessions',
            params: { conversation_id: conversation.id },
            headers: auth_headers(user)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['ar_session']['session_token']).to eq(existing.session_token)
     end
   end
 
