@@ -1,7 +1,7 @@
 module Auth
   class CognitoService
     def initialize
-      @client = Aws::CognitoIdentityProvider::Client.new(region: ENV['AWS_REGION'] || 'us-east-1')
+      @client = Aws::CognitoIdentityProvider::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
       @user_pool_id = ENV['COGNITO_USER_POOL_ID']
       @client_id = ENV['COGNITO_CLIENT_ID']
     end

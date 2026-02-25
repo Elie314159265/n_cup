@@ -22,7 +22,7 @@ module "eks" {
 
       labels = {
         Environment = "production"
-        GithubRepo  = "yoku"
+        GithubRepo  = "link-persona"
       }
 
       tags = {
