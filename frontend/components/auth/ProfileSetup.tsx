@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
-import { updateProfile } from "@/actions/users";
+import { createProfile, updateProfile } from "@/actions/users";
 import type { Gender } from "@/types/user";
 
 interface ProfileSetupProps {
@@ -36,27 +36,32 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
-      const profileId =
+      const profileIdStr =
         typeof window !== "undefined"
-          ? Number(localStorage.getItem("profile_id"))
+          ? localStorage.getItem("profile_id")
           : null;
       const username =
         typeof window !== "undefined"
           ? (localStorage.getItem("username") ?? "")
           : "";
 
-      if (profileId) {
-        await updateProfile(profileId, {
-          display_name: username,
-          bio: formData.bio,
-          age: Number(formData.age),
-          gender: formData.gender as Gender,
-          personality: formData.mbti,
-          interests: formData.interests
-            ? formData.interests.split(",").map((s) => s.trim())
-            : [],
-          preferences: { occupation: formData.occupation },
-        });
+      const body = {
+        display_name: username,
+        bio: formData.bio,
+        age: Number(formData.age),
+        gender: formData.gender as Gender,
+        personality: formData.mbti,
+        interests: formData.interests
+          ? formData.interests.split(",").map((s) => s.trim())
+          : [],
+        preferences: { occupation: formData.occupation },
+      };
+
+      if (profileIdStr) {
+        await updateProfile(Number(profileIdStr), body);
+      } else {
+        const result = await createProfile(body);
+        localStorage.setItem("profile_id", String(result.profile.id));
       }
       onSuccess?.();
     } catch (err) {

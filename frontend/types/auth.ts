@@ -28,6 +28,7 @@ export type SignInRequest = {
 
 export type SignInResponse = {
   user: AuthUser;
+  profile_id: number | null;
   id_token: string;
   access_token: string;
   refresh_token: string;

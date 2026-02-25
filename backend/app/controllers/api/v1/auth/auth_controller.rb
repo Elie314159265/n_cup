@@ -63,6 +63,7 @@ module Api
 
           render json: {
             user: user_json(user),
+            profile_id: user.profile&.id,
             id_token: result[:id_token],
             access_token: result[:access_token],
             refresh_token: result[:refresh_token]
