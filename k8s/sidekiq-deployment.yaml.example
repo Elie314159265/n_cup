@@ -1,26 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: action-cable
+  name: sidekiq
   labels:
-    app: action-cable
+    app: sidekiq
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: action-cable
+      app: sidekiq
   template:
     metadata:
       labels:
-        app: action-cable
+        app: sidekiq
     spec:
       containers:
-      - name: cable
-        image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/yoku-api:latest
-        command: ["bundle", "exec", "puma", "-p", "28080"]
-        ports:
-        - containerPort: 28080
-          name: websocket
+      - name: sidekiq
+        image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/link-persona-api:latest
+        command: ["bundle", "exec", "sidekiq"]
         env:
         - name: RAILS_ENV
           value: "production"
@@ -34,6 +31,13 @@ spec:
             configMapKeyRef:
               name: app-config
               key: redis_url
+        - name: AWS_REGION
+          value: "ap-northeast-1"
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: s3_bucket_name
         resources:
           requests:
             memory: "256Mi"
@@ -41,16 +45,3 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "250m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: action-cable-service
-spec:
-  selector:
-    app: action-cable
-  ports:
-  - protocol: TCP
-    port: 28080
-    targetPort: 28080
-  type: ClusterIP

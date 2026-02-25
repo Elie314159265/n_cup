@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rails-api
+  namespace: default
+  annotations:
+    # terraform output rails_api_irsa_role_arn の値を設定する
+    eks.amazonaws.com/role-arn: arn:aws:iam::<AWS_ACCOUNT_ID>:role/link-persona-rails-api-role
