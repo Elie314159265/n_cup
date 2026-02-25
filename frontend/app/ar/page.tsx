@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Gltf, OrbitControls, Stage } from "@react-three/drei";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useRef, useState, useCallback } from "react";
 import {
   XR,
   createXRStore,
@@ -24,17 +24,144 @@ const MODELS = [
 
 type ModelId = (typeof MODELS)[number]["id"];
 
+// ─── 事前に用意した音声ファイル (public/audio/ に配置) ───────────────────────
+const RESPONSE_AUDIO_FILES = [
+  "/audio/response_0.mp3",
+  "/audio/response_1.mp3",
+  "/audio/response_2.mp3",
+  "/audio/response_3.mp3",
+  "/audio/response_4.mp3",
+];
+
 const _hitMatrix = new THREE.Matrix4();
+
+// ─── 音声会話フック ────────────────────────────────────────────────────────
+function useVoiceChat() {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(0);
+  const [responseIndex, setResponseIndex] = useState(0);
+  const [micError, setMicError] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+
+  const startRecording = useCallback(async () => {
+    if (isPlaying) return;
+    try {
+      setMicError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch {
+      setMicError("マイクの許可が必要です");
+    }
+  }, [isPlaying]);
+
+  const stopRecordingAndRespond = useCallback(() => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current = null;
+    }
+    setIsRecording(false);
+
+    const idx = responseIndex;
+    const audioFile = RESPONSE_AUDIO_FILES[idx % RESPONSE_AUDIO_FILES.length];
+    const audio = new Audio(audioFile);
+
+    let audioContext: AudioContext | null = null;
+
+    const cleanup = () => {
+      setIsPlaying(false);
+      setAudioVolume(0);
+      setResponseIndex((i) => i + 1);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      audioContext?.close();
+    };
+
+    try {
+      audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioContext.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const tick = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        setAudioVolume(avg);
+        if (!audio.paused && !audio.ended) {
+          animFrameRef.current = requestAnimationFrame(tick);
+        }
+      };
+
+      setIsPlaying(true);
+      audio.play().then(tick).catch(cleanup);
+      audio.onended = cleanup;
+    } catch {
+      setIsPlaying(true);
+      audio.play().catch(cleanup);
+      audio.onended = cleanup;
+    }
+  }, [responseIndex]);
+
+  return {
+    isRecording,
+    isPlaying,
+    audioVolume,
+    micError,
+    startRecording,
+    stopRecordingAndRespond,
+  };
+}
+
+// ─── 音量波形バー ──────────────────────────────────────────────────────────
+function WaveformBars({ volume }: { volume: number }) {
+  const heights = [0.4, 0.7, 1.0, 0.8, 0.6, 0.9, 0.5];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, height: 36 }}>
+      {heights.map((base, i) => (
+        <div
+          key={i}
+          style={{
+            width: 5,
+            borderRadius: 4,
+            background: "#a78bfa",
+            height: Math.max(6, base * (8 + (volume / 255) * 28)),
+            transition: "height 0.1s ease",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // ─── AR配置コンポーネント ─────────────────────────────────────────────────
 function ARPlacementModel({
   src,
   selectedModel,
   setSelectedModel,
+  isRecording,
+  isPlaying,
+  audioVolume,
+  micError,
+  onStartRecording,
+  onStopRecording,
 }: {
   src: string;
   selectedModel: ModelId;
   setSelectedModel: (id: ModelId) => void;
+  isRecording: boolean;
+  isPlaying: boolean;
+  audioVolume: number;
+  micError: string | null;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
@@ -125,8 +252,8 @@ function ARPlacementModel({
           ))}
         </div>
 
-        {/* 配置ボタン(配置済みなら非表示) */}
-        {!placed && (
+        {!placed ? (
+          /* ── 配置前: 配置ボタン ── */
           <div
             style={{
               position: "fixed",
@@ -165,6 +292,96 @@ function ARPlacementModel({
               地面を向けてボタンを押すか、モデルをタップ
             </span>
           </div>
+        ) : (
+          /* ── 配置後: 音声会話UI ── */
+          <div
+            style={{
+              position: "fixed",
+              bottom: 36,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            {/* ステータステキスト */}
+            <div
+              style={{
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 500,
+                textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+                background: "rgba(0,0,0,0.5)",
+                padding: "6px 18px",
+                borderRadius: 999,
+                backdropFilter: "blur(8px)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isPlaying
+                ? "💬 相手が話しています..."
+                : isRecording
+                  ? "🎤 話してください..."
+                  : "押して話す"}
+            </div>
+
+            {/* 再生中の音量波形 */}
+            {isPlaying && <WaveformBars volume={audioVolume} />}
+
+            {/* マイクボタン */}
+            <button
+              onPointerDown={onStartRecording}
+              onPointerUp={onStopRecording}
+              onPointerLeave={() => {
+                if (isRecording) onStopRecording();
+              }}
+              disabled={isPlaying}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                background: isRecording
+                  ? "#ef4444"
+                  : isPlaying
+                    ? "#6b7280"
+                    : "#7c3aed",
+                border: isRecording
+                  ? "4px solid rgba(252,165,165,0.6)"
+                  : "4px solid rgba(255,255,255,0.25)",
+                color: "#fff",
+                fontSize: 32,
+                cursor: isPlaying ? "not-allowed" : "pointer",
+                boxShadow: isRecording
+                  ? "0 0 0 14px rgba(239,68,68,0.2), 0 4px 24px rgba(0,0,0,0.4)"
+                  : "0 4px 24px rgba(0,0,0,0.4)",
+                transition: "all 0.15s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                outline: "none",
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              🎤
+            </button>
+
+            {/* エラー表示 */}
+            {micError && (
+              <div
+                style={{
+                  background: "rgba(200,0,0,0.85)",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  borderRadius: 8,
+                  fontSize: 13,
+                }}
+              >
+                {micError}
+              </div>
+            )}
+          </div>
         )}
       </XRDomOverlay>
     </>
@@ -176,10 +393,12 @@ function SceneContent({
   modelSrc,
   selectedModel,
   setSelectedModel,
+  voiceChat,
 }: {
   modelSrc: string;
   selectedModel: ModelId;
   setSelectedModel: (id: ModelId) => void;
+  voiceChat: ReturnType<typeof useVoiceChat>;
 }) {
   return (
     <>
@@ -192,6 +411,12 @@ function SceneContent({
           src={modelSrc}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          isRecording={voiceChat.isRecording}
+          isPlaying={voiceChat.isPlaying}
+          audioVolume={voiceChat.audioVolume}
+          micError={voiceChat.micError}
+          onStartRecording={voiceChat.startRecording}
+          onStopRecording={voiceChat.stopRecordingAndRespond}
         />
       </IfInSessionMode>
 
@@ -222,6 +447,7 @@ export default function ArPage() {
   const [selectedModel, setSelectedModel] = useState<ModelId>("nimo_anime");
   const [arError, setArError] = useState<string | null>(null);
   const modelSrc = MODELS.find((m) => m.id === selectedModel)!.src;
+  const voiceChat = useVoiceChat();
 
   const handleEnterAR = async () => {
     setArError(null);
@@ -255,6 +481,7 @@ export default function ArPage() {
             modelSrc={modelSrc}
             selectedModel={selectedModel}
             setSelectedModel={setSelectedModel}
+            voiceChat={voiceChat}
           />
         </XR>
       </Canvas>
