@@ -1,11 +1,6 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState } from "react";
-import { Canvas } from "@react-three/fiber";
-=======
 import { useState, useEffect } from "react";
->>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import {
   MatchingFilter,
@@ -13,11 +8,7 @@ import {
 } from "@/components/matching/MatchingFilter";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
-<<<<<<< HEAD
-import { Explosion } from "@/components/discover/bomb/Explosion";
-=======
 import { getDiscover, sendLike } from "@/actions/matching";
->>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
 
 interface Profile {
   id: string;
@@ -72,9 +63,6 @@ export default function DiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [explosions, setExplosions] = useState<{ id: number }[]>([]);
-  const [showFadeOverlay, setShowFadeOverlay] = useState(false);
-  const [fadeOpacity, setFadeOpacity] = useState(0);
 
   // マッチング候補を取得（バックエンド対応後に実データが入る）
   useEffect(() => {
@@ -126,26 +114,8 @@ export default function DiscoverPage() {
   };
 
   const handlePass = () => {
-<<<<<<< HEAD
-    console.log("Passed:", DUMMY_PROFILES[currentIndex].username);
-    setExplosions((prev) => [...prev, { id: Date.now() }]);
-  };
-
-  const handleExplosionComplete = () => {
-    // 爆発終了時は画面が真っ黒なので、オーバーレイを表示して状態を引き継ぐ
-    setShowFadeOverlay(true);
-    setFadeOpacity(1);
-
-=======
     console.log("Passed:", profiles[currentIndex].username);
->>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
     setCurrentIndex((prev) => prev + 1);
-
-    // 次のフレームでフェードイン（透明化）を開始
-    setTimeout(() => {
-      setFadeOpacity(0);
-      setTimeout(() => setShowFadeOverlay(false), 1000); // アニメーション完了後に非表示
-    }, 50);
   };
 
   return (
@@ -164,38 +134,9 @@ export default function DiscoverPage() {
         <MatchingFilter onFilter={handleFilter} />
       </div>
 
-      {/* 爆発エフェクトオーバーレイ */}
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
-        <Canvas camera={{ position: [0, 0, 5] }}>
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
-          {explosions.map((explosion) => (
-            <Explosion
-              key={explosion.id}
-              position={[0, 0, 0]}
-              color="#ef4444"
-              count={40}
-              onComplete={handleExplosionComplete}
-            />
-          ))}
-        </Canvas>
-      </div>
-
-      {/* フェードイン用オーバーレイ（暗転からの復帰） */}
-      {showFadeOverlay && (
-        <div
-          className="fixed inset-0 z-[60] bg-black pointer-events-none transition-opacity duration-1000 ease-out"
-          style={{ opacity: fadeOpacity }}
-        />
-      )}
-
       {/* スワイプカード */}
       <div className="flex flex-col items-center gap-6">
-<<<<<<< HEAD
-        {currentIndex < DUMMY_PROFILES.length && !showFadeOverlay ? (
-=======
         {currentIndex < profiles.length ? (
->>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
           <>
             <div className="relative w-full max-w-sm">
               <SwipeCard
