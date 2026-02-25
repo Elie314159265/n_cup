@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: sidekiq
-        image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/link_persona-api:latest
+        image: 276713243798.dkr.ecr.ap-northeast-1.amazonaws.com/link-persona-api:latest
         command: ["bundle", "exec", "sidekiq"]
         env:
         - name: RAILS_ENV

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: cable
-        image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/link_persona-api:latest
+        image: 276713243798.dkr.ecr.ap-northeast-1.amazonaws.com/link-persona-api:latest
         command: ["bundle", "exec", "puma", "-p", "28080"]
         ports:
         - containerPort: 28080
