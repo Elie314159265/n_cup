@@ -26,6 +26,9 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("user_id", String(data.user.id));
       localStorage.setItem("username", data.user.username);
+      if (data.profile_id) {
+        localStorage.setItem("profile_id", String(data.profile_id));
+      }
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ログインエラー");
