@@ -1,8 +1,8 @@
 module Storage
   class S3Service
     def initialize
-      @client = Aws::S3::Client.new(region: ENV['AWS_REGION'] || 'us-east-1')
-      @bucket = ENV['S3_BUCKET_NAME'] || 'yoku-user-assets-production'
+      @client = Aws::S3::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
+      @bucket = ENV['S3_BUCKET_NAME'] || 'link_persona-user-assets-production'
       @cloudfront_domain = ENV['CLOUDFRONT_DOMAIN']
     end
 
@@ -25,7 +25,7 @@ module Storage
       if @cloudfront_domain
         "https://#{@cloudfront_domain}/#{key}"
       else
-        "https://#{@bucket}.s3.#{ENV['AWS_REGION'] || 'us-east-1'}.amazonaws.com/#{key}"
+        "https://#{@bucket}.s3.#{ENV['AWS_REGION'] || 'ap-northeast-1'}.amazonaws.com/#{key}"
       end
     end
 

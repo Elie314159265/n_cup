@@ -1,7 +1,7 @@
 # アプリケーション設計書
 
 ## アプリケーション概要
-AR×マッチングアプリ「yoku」は、AR技術とAIを活用した新しいマッチングプラットフォームです。
+AR×マッチングアプリ「LinkPersona」は、AR技術とAIを活用した新しいマッチングプラットフォームです。
 ユーザーは自分のARアバターを作成してプロフィールを登録し、マッチングした相手のAIアバターと音声でリアルタイム会話できます。
 AIが相手のプロフィール情報（性格、趣味、年齢など）を基に相手になりきって会話するため、実際に会う前に相手の雰囲気や相性を確認できます。
 
@@ -79,6 +79,7 @@ AIが相手のプロフィール情報（性格、趣味、年齢など）を基
 | ar_avatar_id | BIGINT | 外部キー (ar_avatars) | YES | |
 | cup_size | ENUM('A','B','C','D','E','F','G','H','I','J') | カップ数 | YES | |
 | personality | VARCHAR(50) | 性格タイプ | YES | |
+| mbti | VARCHAR(4) | MBTIタイプ (例: ENFP) | YES | INDEX |
 | interests | JSON | 興味・趣味 (配列) | YES | |
 | preferences | JSON | マッチング設定 | YES | |
 | created_at | TIMESTAMP | 作成日時 | NO | |
@@ -106,6 +107,7 @@ AIが相手のプロフィール情報（性格、趣味、年齢など）を基
 | user_id_2 | BIGINT | 外部キー (users) | NO | |
 | status | ENUM('pending','matched','rejected') | 状態 | NO | INDEX |
 | matched_at | TIMESTAMP | マッチング成立日時 | YES | |
+| compatibility_score | INT | 相性スコア (0-100) | YES | |
 | created_at | TIMESTAMP | 作成日時 | NO | |
 | updated_at | TIMESTAMP | 更新日時 | NO | |
 | INDEX | (user_id_1, user_id_2) | 複合ユニークインデックス | | UNIQUE |
@@ -176,7 +178,7 @@ AIが相手のプロフィール情報（性格、趣味、年齢など）を基
 {
   "email": "user@example.com",
   "password": "password123",
-  "username": "yoku_user"
+  "username": "link_persona_user"
 }
 
 // Response
@@ -184,7 +186,7 @@ AIが相手のプロフィール情報（性格、趣味、年齢など）を基
   "user": {
     "id": 1,
     "email": "user@example.com",
-    "username": "yoku_user",
+    "username": "link_persona_user",
     "cognito_sub": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   },
   "tokens": {
@@ -718,7 +720,7 @@ end
 # app/services/ai/bedrock_service.rb
 class Ai::BedrockService
   def initialize
-    @client = Aws::BedrockRuntime::Client.new(region: 'us-east-1')
+    @client = Aws::BedrockRuntime::Client.new(region: 'ap-northeast-1')
   end
 
   def chat(message, context = {})
@@ -762,7 +764,7 @@ end
 # app/services/ai/polly_service.rb
 class Ai::PollyService
   def initialize
-    @client = Aws::Polly::Client.new(region: 'us-east-1')
+    @client = Aws::Polly::Client.new(region: 'ap-northeast-1')
     @s3_service = Storage::S3Service.new
   end
 
@@ -799,7 +801,7 @@ end
 # app/services/ai/transcribe_service.rb
 class Ai::TranscribeService
   def initialize
-    @client = Aws::TranscribeService::Client.new(region: 'us-east-1')
+    @client = Aws::TranscribeService::Client.new(region: 'ap-northeast-1')
     @s3_service = Storage::S3Service.new
   end
 
@@ -1079,18 +1081,18 @@ spec:
 
 #### S3バケット
 
-**1. ユーザーアセット** (`yoku-user-assets-production`)
+**1. ユーザーアセット** (`link_persona-user-assets-production`)
 - プロフィール画像
 - ARアバター3Dモデル
 - AI音声ファイル
 - CloudFront配信
 - ライフサイクル: 90日未アクセス→IA移行
 
-**2. フロントエンド** (`yoku-frontend-production`)
+**2. フロントエンド** (`link_persona-frontend-production`)
 - Next.js ビルド成果物
 - CloudFront Origin
 
-**3. Transcribe入力** (`yoku-transcribe-input`)
+**3. Transcribe入力** (`link_persona-transcribe-input`)
 - 音声認識用一時ファイル
 - ライフサイクル: 1日後削除
 
@@ -1104,12 +1106,12 @@ spec:
 5. **セキュリティ**: OAI (Origin Access Identity) でS3を保護
 
 **ディストリビューション1**: フロントエンド配信
-- Origin: S3 (yoku-frontend-production)
+- Origin: S3 (link_persona-frontend-production)
 - Behavior: Cache all
 - SSL/TLS: TLS 1.2以上
 
 **ディストリビューション2**: アセット配信
-- Origin: S3 (yoku-user-assets-production)
+- Origin: S3 (link_persona-user-assets-production)
 - Behavior: Cache 1年
 - Custom Headers: CORS
 
@@ -1127,7 +1129,7 @@ spec:
 
 **Amazon Bedrock**
 - **モデル**: Claude 3.5 Sonnet
-- **リージョン**: us-east-1
+- **リージョン**: ap-northeast-1
 - **用途**: AI会話生成
 
 **Amazon Polly**
@@ -1285,10 +1287,10 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
       - name: Deploy to S3
         run: |
-          aws s3 sync frontend/out s3://yoku-frontend-production --delete
+          aws s3 sync frontend/out s3://link_persona-frontend-production --delete
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
@@ -1315,7 +1317,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: yoku_test
+          MYSQL_DATABASE: link_persona_test
         ports:
           - 3306:3306
     steps:
@@ -1338,16 +1340,16 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
       - uses: aws-actions/amazon-ecr-login@v2
       - name: Build and Push
         run: |
           cd backend
-          docker build -t yoku-api .
-          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
-          docker tag yoku-api:latest ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
-          docker push ${{ secrets.ECR_REGISTRY }}/yoku-api:latest
+          docker build -t link_persona-api .
+          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+          docker tag link_persona-api:latest ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/link_persona-api:latest
 
   deploy:
     needs: build-and-push
@@ -1358,18 +1360,18 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name yoku-cluster --region us-east-1
+          aws eks update-kubeconfig --name link_persona-cluster --region ap-northeast-1
       - name: Deploy to EKS
         run: |
           kubectl set image deployment/rails-api \
-            rails=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            rails=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl set image deployment/action-cable \
-            cable=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            cable=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl set image deployment/sidekiq \
-            sidekiq=${{ secrets.ECR_REGISTRY }}/yoku-api:${{ github.sha }}
+            sidekiq=${{ secrets.ECR_REGISTRY }}/link_persona-api:${{ github.sha }}
           kubectl rollout status deployment/rails-api
 ```
 
@@ -1397,7 +1399,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-1
       - name: Terraform Format
         run: |
           cd terraform
@@ -1449,7 +1451,7 @@ jobs:
 ```hcl
 # terraform/waf.tf
 resource "aws_wafv2_web_acl" "main" {
-  name  = "yoku-waf"
+  name  = "link_persona-waf"
   scope = "REGIONAL"
 
   default_action {
@@ -1574,7 +1576,7 @@ resource "aws_wafv2_web_acl" "main" {
 ## ドメイン設定（ALBドメイン使用）
 
 ### ALB DNS名
-- **フォーマット**: `yoku-alb-1234567890.us-east-1.elb.amazonaws.com`
+- **フォーマット**: `link_persona-alb-1234567890.ap-northeast-1.elb.amazonaws.com`
 - **HTTPS**: ACM証明書（ワイルドカード対応可）
 
 ### API エンドポイント
@@ -1587,8 +1589,8 @@ resource "aws_wafv2_web_acl" "main" {
 
 ```typescript
 // frontend/.env.production
-NEXT_PUBLIC_API_URL=https://yoku-alb-xxx.us-east-1.elb.amazonaws.com
-NEXT_PUBLIC_WS_URL=wss://yoku-alb-xxx.us-east-1.elb.amazonaws.com/cable
+NEXT_PUBLIC_API_URL=https://link_persona-alb-xxx.ap-northeast-1.elb.amazonaws.com
+NEXT_PUBLIC_WS_URL=wss://link_persona-alb-xxx.ap-northeast-1.elb.amazonaws.com/cable
 ```
 
 ---

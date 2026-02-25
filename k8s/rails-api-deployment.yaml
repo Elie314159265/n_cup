@@ -14,9 +14,10 @@ spec:
       labels:
         app: rails-api
     spec:
+      serviceAccountName: rails-api
       containers:
       - name: rails
-        image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/yoku-api:latest
+        image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/link_persona-api:latest
         ports:
         - containerPort: 3000
           name: http
@@ -34,7 +35,7 @@ spec:
               name: app-config
               key: redis_url
         - name: AWS_REGION
-          value: "us-east-1"
+          value: "ap-northeast-1"
         - name: S3_BUCKET_NAME
           valueFrom:
             configMapKeyRef:
