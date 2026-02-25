@@ -4,7 +4,7 @@ class ArSession < ApplicationRecord
   validates :session_token, presence: true, uniqueness: true
   validates :environment_type, presence: true
 
-  before_create :generate_session_token
+  before_validation :generate_session_token, on: :create
 
   private
 

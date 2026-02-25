@@ -1,6 +1,95 @@
 data "aws_caller_identity" "current" {}
 
 # -------------------------------------------------------
+# IRSA for AWS Load Balancer Controller
+# TargetGroupBindingでPod IPをALBターゲットグループに自動登録する
+# -------------------------------------------------------
+
+data "aws_iam_policy_document" "aws_lbc_trust" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "aws_lbc" {
+  name               = "${var.project_name}-aws-lbc-role"
+  assume_role_policy = data.aws_iam_policy_document.aws_lbc_trust.json
+
+  tags = {
+    Name = "${var.project_name}-aws-lbc-role"
+  }
+}
+
+resource "aws_iam_policy" "aws_lbc" {
+  name        = "${var.project_name}-aws-lbc-policy"
+  description = "IAM policy for AWS Load Balancer Controller (TargetGroupBinding)"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeInstances",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeInternetGateways",
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeLoadBalancerAttributes",
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:DescribeListenerCertificates",
+          "elasticloadbalancing:DescribeSSLPolicies",
+          "elasticloadbalancing:DescribeRules",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetGroupAttributes",
+          "elasticloadbalancing:DescribeTargetHealth",
+          "elasticloadbalancing:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets",
+          "elasticloadbalancing:ModifyTargetGroupAttributes"
+        ]
+        Resource = [
+          aws_lb_target_group.rails_api.arn,
+          aws_lb_target_group.action_cable.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "aws_lbc" {
+  role       = aws_iam_role.aws_lbc.name
+  policy_arn = aws_iam_policy.aws_lbc.arn
+}
+
+# -------------------------------------------------------
 # IRSA (IAM Roles for Service Accounts) for Rails API Pod
 # EKSのOIDCプロバイダーを利用してPodレベルでIAM権限を付与する
 # -------------------------------------------------------
@@ -146,7 +235,8 @@ resource "aws_iam_policy" "rails_api_cognito" {
         Effect = "Allow"
         Action = [
           "cognito-idp:GetUser",
-          "cognito-idp:AdminGetUser"
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminConfirmSignUp"
         ]
         Resource = aws_cognito_user_pool.main.arn
       }

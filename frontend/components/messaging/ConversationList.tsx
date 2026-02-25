@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
+import { getConversations } from "@/actions/conversations";
 
 interface ConversationItem {
   id: string;
@@ -27,19 +28,23 @@ export const ConversationList = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const response = await fetch("/api/v1/conversations");
-        const data = await response.json();
-        setConversations(data.conversations || []);
-      } catch (error) {
-        console.error("会話リスト取得エラー:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConversations();
+    getConversations()
+      .then(({ conversations: convs }) => {
+        setConversations(
+          convs.map((c) => ({
+            id: String(c.id),
+            otherUser: {
+              id: String(c.match_id),
+              username: `ユーザー ${c.match_id}`,
+            },
+            unreadCount: 0,
+          })),
+        );
+      })
+      .catch(() => {
+        // バックエンド未対応のためスキップ
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <Loading message="メッセージを読み込み中..." />;

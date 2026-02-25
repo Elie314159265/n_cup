@@ -7,35 +7,17 @@ import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
+<<<<<<< HEAD
 import { Explosion } from "@/components/discover/bomb/Explosion";
+=======
+import { getMatches } from "@/actions/matching";
+import { getConversations } from "@/actions/conversations";
+>>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
 
 interface LikedUser {
   id: string;
   username: string;
   image?: string;
-}
-
-interface Conversation {
-  id: string;
-  partner: {
-    id: string;
-    username: string;
-    image: string;
-    isOnline?: boolean;
-    isAi?: boolean;
-  };
-  lastMessage: string;
-  unreadCount: number;
-  updatedAt: string;
-}
-
-interface Message {
-  id: string;
-  senderId: string;
-  content: string;
-  timestamp: string;
-  type: "text" | "image" | "audio";
-  isRead: boolean;
 }
 
 interface RequestUser {
@@ -44,7 +26,7 @@ interface RequestUser {
   age: number;
   interests: string;
   compatibility: number;
-  image: string;
+  image?: string;
   bio: string;
   message: string;
 }
@@ -72,113 +54,6 @@ const DUMMY_REQUESTS = [
   },
 ];
 
-const DUMMY_CONVERSATIONS: Conversation[] = [
-  {
-    id: "c1",
-    partner: {
-      id: "u1",
-      username: "さくら",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-      isOnline: true,
-    },
-    lastMessage: "今度の週末、空いてますか？",
-    unreadCount: 2,
-    updatedAt: "2023-10-25T10:30:00",
-  },
-  {
-    id: "c2",
-    partner: {
-      id: "u2",
-      username: "AIアバター（ミカ）",
-      image:
-        "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=400&h=400&fit=crop",
-      isAi: true,
-    },
-    lastMessage: "はじめまして！ミカです。よろしくお願いします。",
-    unreadCount: 0,
-    updatedAt: "2023-10-24T18:00:00",
-  },
-  {
-    id: "c3",
-    partner: {
-      id: "u3",
-      username: "ケンジ",
-      image:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-      isOnline: false,
-    },
-    lastMessage: "了解です！",
-    unreadCount: 0,
-    updatedAt: "2023-10-23T09:15:00",
-  },
-];
-
-const DUMMY_MESSAGES: Record<string, Message[]> = {
-  c1: [
-    {
-      id: "m1",
-      senderId: "u1",
-      content: "はじめまして！マッチングありがとうございます。",
-      timestamp: "2023-10-25T10:00:00",
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "m2",
-      senderId: "me",
-      content: "こちらこそ！趣味が合いそうだなと思っていいねしました。",
-      timestamp: "2023-10-25T10:05:00",
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "m3",
-      senderId: "u1",
-      content: "嬉しいです！カフェ巡りがお好きなんですよね？",
-      timestamp: "2023-10-25T10:10:00",
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "m4",
-      senderId: "u1",
-      content: "今度の週末、空いてますか？",
-      timestamp: "2023-10-25T10:30:00",
-      type: "text",
-      isRead: false,
-    },
-  ],
-  c2: [
-    {
-      id: "m1",
-      senderId: "u2",
-      content: "はじめまして！ミカです。よろしくお願いします。",
-      timestamp: "2023-10-24T18:00:00",
-      type: "text",
-      isRead: true,
-    },
-  ],
-  c3: [
-    {
-      id: "m1",
-      senderId: "me",
-      content: "こんにちは",
-      timestamp: "2023-10-23T09:00:00",
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "m2",
-      senderId: "u3",
-      content: "了解です！",
-      timestamp: "2023-10-23T09:15:00",
-      type: "text",
-      isRead: true,
-    },
-  ],
-};
-
 export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<
     string | null
@@ -196,9 +71,30 @@ export default function MessagesPage() {
   const [fadeOpacity, setFadeOpacity] = useState(0);
 
   useEffect(() => {
-    // ローカルストレージからいいねしたユーザーを取得
+    // ローカルストレージからいいねしたユーザーを取得（デモ用フォールバック）
     const users = JSON.parse(localStorage.getItem("likedUsers") || "[]");
     setTimeout(() => setLikedUsers(users), 0);
+
+    // マッチング一覧を取得
+    getMatches()
+      .then(({ matches }) => {
+        // matched済みのユーザーをマッチング待ちリストに追加
+        const matchedUsers: LikedUser[] = matches.map((m) => ({
+          id: String(m.matched_user.id),
+          username:
+            m.matched_user.profile?.display_name ?? m.matched_user.username,
+          image: m.matched_user.profile?.avatar_url ?? undefined,
+        }));
+        if (matchedUsers.length > 0) setLikedUsers(matchedUsers);
+      })
+      .catch(() => {
+        // バックエンド未対応のためスキップ
+      });
+
+    // 会話一覧を取得（ConversationListコンポーネント内で個別に取得するためここではスキップ）
+    getConversations().catch(() => {
+      // バックエンド未対応のためスキップ
+    });
   }, []);
 
   const handleApprove = (id: string) => {
@@ -352,23 +248,14 @@ export default function MessagesPage() {
         {/* 会話リスト */}
         <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-y-auto">
           <ConversationList
-            conversations={DUMMY_CONVERSATIONS}
-            onSelectConversation={setSelectedConversation}
-            selectedId={selectedConversation}
+            onSelectConversation={(id) => setSelectedConversation(id)}
           />
         </div>
 
         {/* チャットウィンドウ */}
         <div className="lg:col-span-2">
           {selectedConversation ? (
-            <ChatWindow
-              conversationId={selectedConversation}
-              messages={DUMMY_MESSAGES[selectedConversation] || []}
-              partner={
-                DUMMY_CONVERSATIONS.find((c) => c.id === selectedConversation)
-                  ?.partner
-              }
-            />
+            <ChatWindow conversationId={selectedConversation} />
           ) : (
             <div className="bg-white rounded-lg shadow h-full flex items-center justify-center">
               <div className="text-center text-gray-500">

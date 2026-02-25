@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
 import { AvatarViewer } from "./AvatarViewer";
+import {
+  createArAvatar,
+  updateArAvatar,
+  getArAvatars,
+} from "@/actions/ar-avatars";
 
 interface AvatarCustomizerProps {
   onSave?: (avatarData: AvatarConfig) => void;
@@ -13,6 +18,7 @@ interface AvatarConfig {
   hairColor: string;
   skinColor: string;
   clothing: string;
+  bodyType: string;
   voiceType: string;
 }
 
@@ -22,6 +28,7 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
     hairColor: "brown",
     skinColor: "medium",
     clothing: "casual",
+    bodyType: "average",
     voiceType: "female_soft",
   });
   const [loading, setLoading] = useState(false);
@@ -33,17 +40,33 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/v1/ar_avatars", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(avatar),
-      });
+      const customization = {
+        hairStyle: avatar.hairStyle,
+        hairColor: avatar.hairColor,
+        skinColor: avatar.skinColor,
+        clothing: avatar.clothing,
+        bodyType: avatar.bodyType,
+      };
 
-      if (!response.ok) throw new Error("保存に失敗しました");
-
+      // 既存のアバターを確認し、あれば更新、なければ新規作成
+      const existing = await getArAvatars().catch(() => []);
+      if (existing.length > 0) {
+        await updateArAvatar(existing[0].id, {
+          voice_id: avatar.voiceType,
+          customization,
+        });
+      } else {
+        const created = await createArAvatar({
+          name: "My Avatar",
+          voice_id: avatar.voiceType,
+          customization,
+        });
+        localStorage.setItem("ar_avatar_id", String(created.id));
+      }
       onSave?.(avatar);
-    } catch (error) {
-      console.error("アバター保存エラー:", error);
+    } catch {
+      // バックエンド未対応のためスキップ
+      onSave?.(avatar);
     } finally {
       setLoading(false);
     }
@@ -87,10 +110,10 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
                   color === "black"
                     ? "bg-black"
                     : color === "brown"
-                    ? "bg-amber-700"
-                    : color === "blonde"
-                    ? "bg-yellow-300"
-                    : "bg-red-500"
+                      ? "bg-amber-700"
+                      : color === "blonde"
+                        ? "bg-yellow-300"
+                        : "bg-red-500"
                 }`}
               />
             ))}

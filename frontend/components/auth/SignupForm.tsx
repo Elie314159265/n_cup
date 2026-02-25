@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { signUp } from "@/actions/auth";
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -20,16 +21,13 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     setError("");
 
     try {
-      const response = await fetch("/api/v1/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("登録に失敗しました");
-      }
-
+      const data = await signUp({ email, username, password });
+      // トークンとユーザー情報をlocalStorageに保存
+      localStorage.setItem("id_token", data.id_token);
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("user_id", String(data.user.id));
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("profile_id", String(data.profile_id));
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "登録エラー");

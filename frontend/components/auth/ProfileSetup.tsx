@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { createProfile, updateProfile } from "@/actions/users";
+import type { Gender } from "@/types/user";
 
 interface ProfileSetupProps {
   onSuccess?: () => void;
@@ -22,7 +24,7 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -34,16 +36,33 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
-      const response = await fetch("/api/v1/profiles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const profileIdStr =
+        typeof window !== "undefined"
+          ? localStorage.getItem("profile_id")
+          : null;
+      const username =
+        typeof window !== "undefined"
+          ? (localStorage.getItem("username") ?? "")
+          : "";
 
-      if (!response.ok) {
-        throw new Error("プロフィール作成に失敗しました");
+      const body = {
+        display_name: username,
+        bio: formData.bio,
+        age: Number(formData.age),
+        gender: formData.gender as Gender,
+        personality: formData.mbti,
+        interests: formData.interests
+          ? formData.interests.split(",").map((s) => s.trim())
+          : [],
+        preferences: { occupation: formData.occupation },
+      };
+
+      if (profileIdStr) {
+        await updateProfile(Number(profileIdStr), body);
+      } else {
+        const result = await createProfile(body);
+        localStorage.setItem("profile_id", String(result.profile.id));
       }
-
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");

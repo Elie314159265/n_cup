@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
+import { getMessages } from "@/actions/conversations";
 
 interface Message {
   id: string;
@@ -25,11 +26,27 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(
-          `/api/v1/conversations/${conversationId}/messages`
+        const { messages: msgs } = await getMessages(Number(conversationId));
+        setMessages(
+          msgs.map((m) => ({
+            id: String(m.id),
+            sender:
+              String(m.sender_id) ===
+              (typeof window !== "undefined"
+                ? localStorage.getItem("user_id")
+                : null)
+                ? "user"
+                : "other",
+            content: m.content ?? "",
+            timestamp: new Date(m.created_at),
+            type:
+              m.message_type === "image"
+                ? "image"
+                : m.message_type === "voice"
+                  ? "voice"
+                  : "text",
+          })),
         );
-        const data = await response.json();
-        setMessages(data.messages || []);
       } catch (error) {
         console.error("メッセージ取得エラー:", error);
       } finally {

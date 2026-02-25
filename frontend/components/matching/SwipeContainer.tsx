@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SwipeCard } from "./SwipeCard";
 import { Loading } from "@/components/common/Loading";
 
@@ -19,38 +19,13 @@ interface SwipeContainerProps {
 }
 
 export const SwipeContainer = ({ onLike, onPass }: SwipeContainerProps) => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const response = await fetch("/api/v1/discover");
-        const data = await response.json();
-        setProfiles(data.profiles || []);
-      } catch (error) {
-        console.error("プロフィール取得エラー:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfiles();
-  }, []);
+  const [loading] = useState(false);
 
   const handleLike = async () => {
     const profile = profiles[currentIndex];
-    try {
-      await fetch("/api/v1/likes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liked_user_id: profile.id }),
-      });
-      onLike?.(profile);
-    } catch (error) {
-      console.error("いいねエラー:", error);
-    }
+    onLike?.(profile);
     moveToNext();
   };
 

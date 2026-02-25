@@ -1,12 +1,23 @@
 "use client";
 
+<<<<<<< HEAD
 import { useState } from "react";
 import { Canvas } from "@react-three/fiber";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
 import { SwipeCard } from "@/components/matching/SwipeCard";
-import { MatchingFilter } from "@/components/matching/MatchingFilter";
+import {
+  MatchingFilter,
+  FilterOptions,
+} from "@/components/matching/MatchingFilter";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
+<<<<<<< HEAD
 import { Explosion } from "@/components/discover/bomb/Explosion";
+=======
+import { getDiscover, sendLike } from "@/actions/matching";
+>>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
 
 interface Profile {
   id: string;
@@ -56,7 +67,8 @@ const DUMMY_PROFILES: Profile[] = [
 ];
 
 export default function DiscoverPage() {
-  const [, setFilters] = useState({});
+  const [, setFilters] = useState<FilterOptions>({});
+  const [profiles, setProfiles] = useState(DUMMY_PROFILES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -64,7 +76,29 @@ export default function DiscoverPage() {
   const [showFadeOverlay, setShowFadeOverlay] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState(0);
 
-  const handleFilter = (newFilters: Record<string, unknown>) => {
+  // マッチング候補を取得（バックエンド対応後に実データが入る）
+  useEffect(() => {
+    getDiscover({ limit: 20 })
+      .then(({ users }) => {
+        if (users.length > 0) {
+          setProfiles(
+            users.map((u) => ({
+              id: String(u.id),
+              username: u.profile?.display_name ?? u.username,
+              age: u.profile?.age ?? 0,
+              interests: u.profile?.interests?.join("・") ?? "",
+              image: u.profile?.avatar_url ?? undefined,
+              compatibility: u.compatibility_score ?? 0,
+            })),
+          );
+        }
+      })
+      .catch(() => {
+        // バックエンド未対応のためダミーデータを使用
+      });
+  }, []);
+
+  const handleFilter = (newFilters: FilterOptions) => {
     setFilters(newFilters);
   };
 
@@ -72,13 +106,18 @@ export default function DiscoverPage() {
     setIsModalOpen(true);
   };
 
-  const handleSendRequest = () => {
-    const profile = DUMMY_PROFILES[currentIndex];
-    // ローカルストレージに保存（デモ用）
-    const likedUsers = JSON.parse(localStorage.getItem("likedUsers") || "[]");
-    if (!likedUsers.find((u: Profile) => u.id === profile.id)) {
-      likedUsers.push({ ...profile, message });
-      localStorage.setItem("likedUsers", JSON.stringify(likedUsers));
+  const handleSendRequest = async () => {
+    const profile = profiles[currentIndex];
+    // sendLike API を呼び出す
+    try {
+      await sendLike(Number(profile.id));
+    } catch {
+      // バックエンド未対応のためローカルに保存（デモ用）
+      const likedUsers = JSON.parse(localStorage.getItem("likedUsers") || "[]");
+      if (!likedUsers.find((u: Profile) => u.id === profile.id)) {
+        likedUsers.push({ ...profile, message });
+        localStorage.setItem("likedUsers", JSON.stringify(likedUsers));
+      }
     }
     console.log("Liked:", profile.username, "Message:", message);
     setMessage("");
@@ -87,6 +126,7 @@ export default function DiscoverPage() {
   };
 
   const handlePass = () => {
+<<<<<<< HEAD
     console.log("Passed:", DUMMY_PROFILES[currentIndex].username);
     setExplosions((prev) => [...prev, { id: Date.now() }]);
   };
@@ -96,6 +136,9 @@ export default function DiscoverPage() {
     setShowFadeOverlay(true);
     setFadeOpacity(1);
 
+=======
+    console.log("Passed:", profiles[currentIndex].username);
+>>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
     setCurrentIndex((prev) => prev + 1);
 
     // 次のフレームでフェードイン（透明化）を開始
@@ -148,11 +191,15 @@ export default function DiscoverPage() {
 
       {/* スワイプカード */}
       <div className="flex flex-col items-center gap-6">
+<<<<<<< HEAD
         {currentIndex < DUMMY_PROFILES.length && !showFadeOverlay ? (
+=======
+        {currentIndex < profiles.length ? (
+>>>>>>> 9517289d6ad4b007e75b8abba4eb990917e302ed
           <>
             <div className="relative w-full max-w-sm">
               <SwipeCard
-                profile={DUMMY_PROFILES[currentIndex]}
+                profile={profiles[currentIndex]}
                 onLike={handleLike}
                 onPass={handlePass}
               />
@@ -163,7 +210,7 @@ export default function DiscoverPage() {
                 <span className="text-xs font-bold text-red-500">爆破</span>
               </div>
               <div className="text-sm text-gray-500 font-medium">
-                {currentIndex + 1} / {DUMMY_PROFILES.length}
+                {currentIndex + 1} / {profiles.length}
               </div>
               <div className="flex flex-col items-center opacity-60">
                 <span className="text-3xl font-bold text-green-500">→</span>

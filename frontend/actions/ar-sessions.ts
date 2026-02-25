@@ -1,7 +1,6 @@
 import { apiClient } from "./client";
 import type {
   ArSession,
-  AiMessage,
   CreateArSessionRequest,
   UpdateArSessionRequest,
 } from "../types/ar-session";

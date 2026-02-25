@@ -1,49 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
 import { AREnvironmentSelector } from "@/components/ar-scene/AREnvironmentSelector";
 import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
-import { Loading } from "@/components/common/Loading";
 
-export default function ARSessionPage() {
+function ARSessionContent() {
   const searchParams = useSearchParams();
   const conversationId = searchParams.get("conversation_id");
-  const [arSessionId, setArSessionId] = useState<string | null>(null);
-  const [selectedEnvironment, setSelectedEnvironment] =
+  const arSessionId = conversationId ? `session-${conversationId}` : null;
+  const [_selectedEnvironment, setSelectedEnvironment] =
     useState<string>("cafe");
   const [isStarted, setIsStarted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [partnerName, setPartnerName] = useState("AIアバター");
-
-  useEffect(() => {
-    const initARSession = async () => {
-      if (!conversationId) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch("/api/v1/ar_sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            conversation_id: conversationId,
-            environment_id: selectedEnvironment,
-          }),
-        });
-
-        const data = await response.json();
-        setArSessionId(data.id);
-        setPartnerName(data.partner_name || "AIアバター");
-      } catch (error) {
-        console.error("ARセッション初期化エラー:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initARSession();
-  }, [conversationId, selectedEnvironment]);
+  const [partnerName] = useState("AIアバター");
 
   if (!conversationId) {
     return (
@@ -51,10 +21,6 @@ export default function ARSessionPage() {
         会話が見つかりません
       </div>
     );
-  }
-
-  if (loading) {
-    return <Loading message="ARセッションを準備中..." />;
   }
 
   if (!isStarted) {
@@ -112,5 +78,19 @@ export default function ARSessionPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ARSessionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+        </div>
+      }
+    >
+      <ARSessionContent />
+    </Suspense>
   );
 }
