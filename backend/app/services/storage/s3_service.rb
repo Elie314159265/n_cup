@@ -11,8 +11,8 @@ module Storage
         bucket: @bucket,
         key: key,
         body: file_data,
-        content_type: content_type,
-        acl: 'public-read'
+        content_type: content_type
+        # acl不要: バケットはBlock Public ACL設定。CloudFront OAI経由でアクセス
       })
 
       public_url(key)

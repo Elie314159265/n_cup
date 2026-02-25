@@ -1,8 +1,6 @@
 module Api
   module V1
     class AiController < ApplicationController
-      before_action :authenticate_user!
-
       # POST /api/v1/ai/chat
       # AI会話リクエスト（相手のプロフィール情報を基にAIが応答）
       def chat
@@ -114,20 +112,6 @@ module Api
       end
 
       private
-
-      def authenticate_user!
-        # JWT token authentication
-        token = request.headers['Authorization']&.split(' ')&.last
-        @current_user = Auth::TokenService.extract_user_from_token(token)
-
-        unless @current_user
-          render json: { error: 'Unauthorized' }, status: :unauthorized
-        end
-      end
-
-      def current_user
-        @current_user
-      end
 
       # マッチから相手のユーザーを取得
       def get_partner_from_match(match, current_user)
