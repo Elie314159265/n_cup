@@ -13,15 +13,24 @@ module Api
             username: params[:username]
           )
 
+          cognito_service.admin_confirm_sign_up(params[:email])
+
           user = User.create!(
             cognito_sub: result[:user_sub],
             email: params[:email],
             username: params[:username]
           )
 
+          tokens = cognito_service.sign_in(
+            email: params[:email],
+            password: params[:password]
+          )
+
           render json: {
             user: user_json(user),
-            message: "Signup successful. Please check your email for verification."
+            id_token: tokens[:id_token],
+            access_token: tokens[:access_token],
+            refresh_token: tokens[:refresh_token]
           }, status: :created
         rescue Aws::CognitoIdentityProvider::Errors::UsernameExistsException
           render json: { error: "Email already registered" }, status: :unprocessable_entity
@@ -47,12 +56,9 @@ module Api
 
           render json: {
             user: user_json(user),
-            tokens: {
-              id_token: result[:id_token],
-              access_token: result[:access_token],
-              refresh_token: result[:refresh_token],
-              expires_in: result[:expires_in]
-            }
+            id_token: result[:id_token],
+            access_token: result[:access_token],
+            refresh_token: result[:refresh_token]
           }
         rescue Aws::CognitoIdentityProvider::Errors::NotAuthorizedException
           render json: { error: "Invalid email or password" }, status: :unauthorized
@@ -79,11 +85,8 @@ module Api
           result = cognito_service.refresh_token(refresh_token)
 
           render json: {
-            tokens: {
-              id_token: result[:id_token],
-              access_token: result[:access_token],
-              expires_in: result[:expires_in]
-            }
+            id_token: result[:id_token],
+            access_token: result[:access_token]
           }
         rescue => e
           Rails.logger.error("Token refresh error: #{e.message}")
@@ -100,10 +103,12 @@ module Api
         def user_json(user)
           {
             id: user.id,
+            cognito_sub: user.cognito_sub,
             email: user.email,
             username: user.username,
             has_profile: user.profile.present?,
-            created_at: user.created_at
+            created_at: user.created_at,
+            updated_at: user.updated_at
           }
         end
       end

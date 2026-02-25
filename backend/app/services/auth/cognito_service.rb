@@ -57,6 +57,13 @@ module Auth
       }
     end
 
+    def admin_confirm_sign_up(email)
+      @client.admin_confirm_sign_up({
+        user_pool_id: @user_pool_id,
+        username: email
+      })
+    end
+
     def verify_token(token)
       # JWT verification logic with Cognito public keys
       # This is a simplified version - production should verify signature
