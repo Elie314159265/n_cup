@@ -12,7 +12,7 @@ module Api
         end
 
         if conversation.ar_session.present?
-          return render json: { error: "AR session already exists for this conversation" }, status: :unprocessable_entity
+          return render json: { ar_session: session_json(conversation.ar_session) }, status: :ok
         end
 
         ar_session = ArSession.create!(

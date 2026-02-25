@@ -62,12 +62,10 @@ Rails.application.routes.draw do
       end
 
       # AI Services
-      namespace :ai do
-        post "chat", to: "ai#chat"
-        post "speech", to: "ai#speech"
-        post "transcribe", to: "ai#transcribe"
-        get "transcribe/:job_name", to: "ai#transcribe_result"
-      end
+      post "ai/chat", to: "ai#chat"
+      post "ai/speech", to: "ai#speech"
+      post "ai/transcribe", to: "ai#transcribe"
+      get "ai/transcribe/:job_name", to: "ai#transcribe_result"
     end
   end
 
