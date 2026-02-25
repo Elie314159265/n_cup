@@ -1,7 +1,7 @@
 import type { AiMessage } from "./ar-session";
 
 export type AiChatRequest = {
-  ar_session_id: number;
+  ar_session_id: string; // ARセッションの session_token (例: "sess_abc123")
   message: string;
   context?: {
     target_profile_id?: number;
