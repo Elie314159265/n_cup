@@ -54,12 +54,12 @@ const DUMMY_PROFILES: Profile[] = [
 ];
 
 export default function DiscoverPage() {
-  const [filters, setFilters] = useState({});
+  const [, setFilters] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleFilter = (newFilters: any) => {
+  const handleFilter = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters);
   };
 

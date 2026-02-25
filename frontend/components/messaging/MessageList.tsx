@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
 
 interface Message {
@@ -68,10 +69,14 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
             >
               {message.type === "text" && <p>{message.content}</p>}
               {message.type === "image" && (
-                <img
-                  src={message.mediaUrl}
+                <Image
+                  src={message.mediaUrl!}
                   alt="shared"
-                  className="max-w-full rounded"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: "100%", height: "auto" }}
+                  className="rounded"
                 />
               )}
               {message.type === "voice" && (

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/common/Button";
 
 export default function ErrorPage({
-  error,
+  error: _error,
 }: {
   error: Error & { digest?: string };
 }) {

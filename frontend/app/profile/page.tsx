@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
 
 interface UserProfile {
@@ -54,11 +55,14 @@ export default function ProfilePage() {
         <div className="px-8 py-8">
           <div className="flex items-start gap-6 mb-8">
             {profile.image ? (
-              <img
-                src={profile.image}
-                alt={profile.username}
-                className="w-24 h-24 rounded-full object-cover -mt-16 border-4 border-white shadow-lg"
-              />
+              <div className="relative w-24 h-24 -mt-16">
+                <Image
+                  src={profile.image}
+                  alt={profile.username}
+                  fill
+                  className="rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              </div>
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-r from-pink-300 to-purple-300 flex items-center justify-center text-4xl -mt-16 border-4 border-white shadow-lg">
                 👤

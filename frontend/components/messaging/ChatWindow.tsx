@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Loading } from "@/components/common/Loading";
@@ -56,10 +57,12 @@ export const ChatWindow = ({ conversationId }: ChatWindowProps) => {
       {/* ヘッダー */}
       <div className="flex items-center gap-3 p-4 border-b border-gray-200">
         {conversation.otherUser.avatar ? (
-          <img
+          <Image
             src={conversation.otherUser.avatar}
             alt={conversation.otherUser.username}
-            className="w-10 h-10 rounded-full"
+            width={40}
+            height={40}
+            className="rounded-full"
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white">

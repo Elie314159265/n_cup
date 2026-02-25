@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/common/Button";
-import { Loading } from "@/components/common/Loading";
 
 interface VoiceChatInterfaceProps {
   arSessionId: string;
@@ -26,12 +25,17 @@ export const VoiceChatInterface = ({
     try {
       // Web Speech APIを使用
       const SpeechRecognition =
-        window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).SpeechRecognition ||
+                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       recognition.lang = "ja-JP";
 
-      recognition.onresult = async (event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = async (event: any) => {
         const text = Array.from(event.results)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((result: any) => result[0].transcript)
           .join("");
 
@@ -39,7 +43,8 @@ export const VoiceChatInterface = ({
         await sendToAI(text);
       };
 
-      recognition.onerror = (event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onerror = (event: any) => {
         setError(`音声認識エラー: ${event.error}`);
       };
 
@@ -48,7 +53,7 @@ export const VoiceChatInterface = ({
       };
 
       recognition.start();
-    } catch (err) {
+    } catch (_err) {
       setError("音声入力に対応していません");
       setIsListening(false);
     }
@@ -75,7 +80,7 @@ export const VoiceChatInterface = ({
         const audio = new Audio(data.audioUrl);
         audio.play();
       }
-    } catch (err) {
+    } catch (_err) {
       setError("AI応答取得エラー");
     } finally {
       setIsResponding(false);

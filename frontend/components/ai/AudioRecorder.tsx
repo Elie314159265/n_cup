@@ -10,7 +10,7 @@ interface AudioRecorderProps {
 
 export const AudioRecorder = ({
   onRecord,
-  onTranscript,
+  onTranscript: _onTranscript,
 }: AudioRecorderProps) => {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -48,7 +48,7 @@ export const AudioRecorder = ({
       setIsRecording(true);
       setRecordingTime(0);
       setError("");
-    } catch (err) {
+    } catch (_err) {
       setError("マイクへのアクセスが拒否されました");
     }
   };

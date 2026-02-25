@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
 
 interface ConversationItem {
@@ -61,10 +62,12 @@ export const ConversationList = ({
         >
           <div className="flex items-start gap-3">
             {conv.otherUser.avatar ? (
-              <img
+              <Image
                 src={conv.otherUser.avatar}
                 alt={conv.otherUser.username}
-                className="w-12 h-12 rounded-full flex-shrink-0"
+                width={48}
+                height={48}
+                className="rounded-full flex-shrink-0"
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0">

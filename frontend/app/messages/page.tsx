@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
@@ -33,6 +34,17 @@ interface Message {
   timestamp: string;
   type: "text" | "image" | "audio";
   isRead: boolean;
+}
+
+interface RequestUser {
+  id: string;
+  username: string;
+  age: number;
+  interests: string;
+  compatibility: number;
+  image: string;
+  bio: string;
+  message: string;
 }
 
 const DUMMY_REQUESTS = [
@@ -171,12 +183,14 @@ export default function MessagesPage() {
   >(null);
   const [likedUsers, setLikedUsers] = useState<LikedUser[]>([]);
   const [requests, setRequests] = useState(DUMMY_REQUESTS);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
+    null
+  );
 
   useEffect(() => {
     // ローカルストレージからいいねしたユーザーを取得
     const users = JSON.parse(localStorage.getItem("likedUsers") || "[]");
-    setLikedUsers(users);
+    setTimeout(() => setLikedUsers(users), 0);
   }, []);
 
   const handleApprove = (id: string) => {
@@ -208,12 +222,13 @@ export default function MessagesPage() {
                   key={user.id}
                   className="flex flex-col items-center min-w-[80px]"
                 >
-                  <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden mb-2 border-2 border-pink-200 shadow-sm">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden mb-2 border-2 border-pink-200 shadow-sm relative">
                     {user.image ? (
-                      <img
+                      <Image
                         src={user.image}
                         alt={user.username}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl">
@@ -252,12 +267,13 @@ export default function MessagesPage() {
                   onClick={() => setSelectedRequest(req)}
                   className="flex flex-col items-center min-w-[80px] group"
                 >
-                  <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden mb-2 border-2 border-purple-200 shadow-sm group-hover:border-purple-400 transition-colors relative">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden mb-2 border-2 border-purple-200 shadow-sm group-hover:border-purple-400 transition-colors relative relative">
                     {req.image ? (
-                      <img
+                      <Image
                         src={req.image}
                         alt={req.username}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl">
@@ -319,12 +335,13 @@ export default function MessagesPage() {
       >
         {selectedRequest && (
           <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full bg-gray-100 overflow-hidden mb-4 border-4 border-white shadow-lg">
+            <div className="w-32 h-32 rounded-full bg-gray-100 overflow-hidden mb-4 border-4 border-white shadow-lg relative">
               {selectedRequest.image ? (
-                <img
+                <Image
                   src={selectedRequest.image}
                   alt={selectedRequest.username}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl">
@@ -343,7 +360,9 @@ export default function MessagesPage() {
                 <div className="absolute -top-3 left-4 bg-pink-100 text-pink-600 text-xs px-2 py-1 rounded-full font-bold">
                   メッセージ
                 </div>
-                <p className="text-gray-800 mt-1">"{selectedRequest.message}"</p>
+                <p className="text-gray-800 mt-1">
+                  &quot;{selectedRequest.message}&quot;
+                </p>
               </div>
             )}
 

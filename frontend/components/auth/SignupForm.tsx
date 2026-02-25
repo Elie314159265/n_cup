@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
-import { Loading } from "@/components/common/Loading";
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -82,7 +81,12 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
 
       {error && <div className="text-red-500 text-sm">{error}</div>}
 
-      <Button type="submit" variant="primary" loading={loading} className="w-full">
+      <Button
+        type="submit"
+        variant="primary"
+        loading={loading}
+        className="w-full"
+      >
         登録
       </Button>
     </form>

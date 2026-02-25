@@ -6,7 +6,7 @@ import { AvatarCustomizer } from "@/components/ar-scene/AvatarCustomizer";
 export default function AvatarCustomizePage() {
   const router = useRouter();
 
-  const handleSave = (avatarData: any) => {
+  const handleSave = (_avatarData: unknown) => {
     router.push("/discover");
   };
 

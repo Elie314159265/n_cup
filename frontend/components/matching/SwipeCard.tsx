@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface Profile {
   id: string;
@@ -27,15 +28,20 @@ export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
 
   useEffect(() => {
     // プロフィール切り替え時に右側からスワイプインさせる
-    setIsResetting(true);
-    setDragOffset({ x: 1000, y: 0 }); // 一旦右側に配置
-    setIsAnimating(false);
+    const timer = setTimeout(() => {
+      setIsResetting(true);
+      setDragOffset({ x: 1000, y: 0 }); // 一旦右側に配置
+      setIsAnimating(false);
+    }, 0);
 
     const timer = setTimeout(() => {
       setIsResetting(false);
       setDragOffset({ x: 0, y: 0 }); // アニメーションしながら中央へ
     }, 50);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
   }, [profile]);
 
   const handleStart = (clientX: number, clientY: number) => {
@@ -111,10 +117,11 @@ export const SwipeCard = ({ profile, onLike, onPass }: SwipeCardProps) => {
       {/* プロフィール画像 */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 pointer-events-none">
         {profile.image ? (
-          <img
+          <Image
             src={profile.image}
             alt={profile.username}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-pink-300 to-purple-300 flex items-center justify-center">
