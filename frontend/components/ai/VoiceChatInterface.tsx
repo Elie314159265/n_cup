@@ -33,7 +33,8 @@ export const VoiceChatInterface = ({
   const [history, setHistory] = useState<ConversationTurn[]>([]);
   const [isEnding, setIsEnding] = useState(false);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finalTranscriptRef = useRef("");
 
@@ -97,7 +98,7 @@ export const VoiceChatInterface = ({
     }
 
     finalTranscriptRef.current = "";
-    const recognition: SpeechRecognition = new SpeechRecognition();
+    const recognition = new SpeechRecognition();
     recognition.lang = "ja-JP";
     recognition.interimResults = true;
     recognition.continuous = false;
