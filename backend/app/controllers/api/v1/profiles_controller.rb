@@ -4,6 +4,20 @@ module Api
       before_action :set_profile, only: [ :show, :update, :upload_avatar ]
       before_action :authorize_owner!, only: [ :update, :upload_avatar ]
 
+      # POST /api/v1/profiles
+      def create
+        if current_user.profile.present?
+          return render json: { error: "Profile already exists" }, status: :unprocessable_entity
+        end
+
+        @profile = current_user.build_profile(profile_params)
+        if @profile.save
+          render json: { profile: profile_json(@profile) }, status: :created
+        else
+          render json: { errors: @profile.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       # GET /api/v1/profiles/:id
       def show
         render json: { profile: profile_json(@profile) }

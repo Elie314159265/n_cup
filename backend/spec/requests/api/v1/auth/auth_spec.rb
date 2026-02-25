@@ -20,14 +20,17 @@ RSpec.describe 'Api::V1::Auth', type: :request do
         })
       end
 
-      it '201を返してユーザーを作成しトークンを含む' do
+      it '201を返してユーザーとプロフィールを作成しトークンを含む' do
         post '/api/v1/auth/signup', params: params
         expect(response).to have_http_status(:created)
         body = JSON.parse(response.body)
         expect(body['user']['email']).to eq('new@example.com')
+        expect(body['profile_id']).to be_present
         expect(body['id_token']).to eq('id_token')
         expect(body['refresh_token']).to eq('refresh_token')
-        expect(User.find_by(email: 'new@example.com')).to be_present
+        user = User.find_by(email: 'new@example.com')
+        expect(user).to be_present
+        expect(user.profile).to be_present
       end
     end
 

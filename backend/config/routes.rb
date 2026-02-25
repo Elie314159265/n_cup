@@ -18,7 +18,7 @@ Rails.application.routes.draw do
       resources :users, only: [ :show, :update ]
 
       # Profiles
-      resources :profiles, only: [ :show, :update ] do
+      resources :profiles, only: [ :create, :show, :update ] do
         member do
           post "avatar", to: "profiles#upload_avatar"
         end

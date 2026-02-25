@@ -36,17 +36,17 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
-      const userId =
+      const profileId =
         typeof window !== "undefined"
-          ? Number(localStorage.getItem("user_id"))
+          ? Number(localStorage.getItem("profile_id"))
           : null;
       const username =
         typeof window !== "undefined"
           ? (localStorage.getItem("username") ?? "")
           : "";
 
-      if (userId) {
-        await updateProfile(userId, {
+      if (profileId) {
+        await updateProfile(profileId, {
           display_name: username,
           bio: formData.bio,
           age: Number(formData.age),
