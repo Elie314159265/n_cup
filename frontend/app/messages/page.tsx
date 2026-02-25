@@ -58,7 +58,6 @@ export default function MessagesPage() {
   const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
     null,
   );
-  const [conversationIds, setConversationIds] = useState<string[]>([]);
 
   useEffect(() => {
     // ローカルストレージからいいねしたユーザーを取得（デモ用フォールバック）
@@ -81,16 +80,10 @@ export default function MessagesPage() {
         // バックエンド未対応のためスキップ
       });
 
-    // 会話一覧を取得
-    getConversations()
-      .then(({ conversations }) => {
-        if (conversations.length > 0) {
-          setConversationIds(conversations.map((c) => String(c.id)));
-        }
-      })
-      .catch(() => {
-        // バックエンド未対応のためスキップ
-      });
+    // 会話一覧を取得（ConversationListコンポーネント内で個別に取得するためここではスキップ）
+    getConversations().catch(() => {
+      // バックエンド未対応のためスキップ
+    });
   }, []);
 
   const handleApprove = (id: string) => {

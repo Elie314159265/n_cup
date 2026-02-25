@@ -28,14 +28,17 @@ const DUMMY_PROFILE: UserProfile = {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(DUMMY_PROFILE);
-  const [loading, setLoading] = useState(false);
+  // userId が存在する場合のみ fetch するので、その時だけ loading=true で開始
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("user_id") !== null;
+  });
 
   useEffect(() => {
     const userId =
       typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
     if (!userId) return;
 
-    setLoading(true);
     getProfile(Number(userId))
       .then((data) => {
         setProfile({

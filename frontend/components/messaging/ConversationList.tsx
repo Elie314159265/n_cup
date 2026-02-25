@@ -25,10 +25,9 @@ export const ConversationList = ({
   onSelectConversation,
 }: ConversationListProps) => {
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     getConversations()
       .then(({ conversations: convs }) => {
         setConversations(
