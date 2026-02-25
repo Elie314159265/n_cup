@@ -69,10 +69,9 @@ export default function MessagesPage() {
       .then(({ matches }) => {
         // matched済みのユーザーをマッチング待ちリストに追加
         const matchedUsers: LikedUser[] = matches.map((m) => ({
-          id: String(m.matched_user.id),
-          username:
-            m.matched_user.profile?.display_name ?? m.matched_user.username,
-          image: m.matched_user.profile?.avatar_url ?? undefined,
+          id: String(m.partner.id),
+          username: m.partner.display_name ?? m.partner.username,
+          image: m.partner.avatar_url ?? undefined,
         }));
         if (matchedUsers.length > 0) setLikedUsers(matchedUsers);
       })
