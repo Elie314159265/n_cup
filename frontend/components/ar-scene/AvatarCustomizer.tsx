@@ -13,6 +13,7 @@ interface AvatarConfig {
   hairColor: string;
   skinColor: string;
   clothing: string;
+  bodyType: string;
   voiceType: string;
 }
 
@@ -22,6 +23,7 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
     hairColor: "brown",
     skinColor: "medium",
     clothing: "casual",
+    bodyType: "average",
     voiceType: "female_soft",
   });
   const [loading, setLoading] = useState(false);
@@ -33,17 +35,7 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/v1/ar_avatars", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(avatar),
-      });
-
-      if (!response.ok) throw new Error("保存に失敗しました");
-
       onSave?.(avatar);
-    } catch (error) {
-      console.error("アバター保存エラー:", error);
     } finally {
       setLoading(false);
     }
@@ -87,10 +79,10 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
                   color === "black"
                     ? "bg-black"
                     : color === "brown"
-                    ? "bg-amber-700"
-                    : color === "blonde"
-                    ? "bg-yellow-300"
-                    : "bg-red-500"
+                      ? "bg-amber-700"
+                      : color === "blonde"
+                        ? "bg-yellow-300"
+                        : "bg-red-500"
                 }`}
               />
             ))}

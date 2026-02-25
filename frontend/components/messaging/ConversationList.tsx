@@ -27,19 +27,7 @@ export const ConversationList = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const response = await fetch("/api/v1/conversations");
-        const data = await response.json();
-        setConversations(data.conversations || []);
-      } catch (error) {
-        console.error("会話リスト取得エラー:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConversations();
+    setLoading(false);
   }, []);
 
   if (loading) return <Loading message="メッセージを読み込み中..." />;

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { SwipeCard } from "@/components/matching/SwipeCard";
-import { MatchingFilter } from "@/components/matching/MatchingFilter";
+import {
+  MatchingFilter,
+  FilterOptions,
+} from "@/components/matching/MatchingFilter";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
 
@@ -54,12 +57,12 @@ const DUMMY_PROFILES: Profile[] = [
 ];
 
 export default function DiscoverPage() {
-  const [, setFilters] = useState({});
+  const [, setFilters] = useState<FilterOptions>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleFilter = (newFilters: Record<string, unknown>) => {
+  const handleFilter = (newFilters: FilterOptions) => {
     setFilters(newFilters);
   };
 

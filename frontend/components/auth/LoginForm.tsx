@@ -19,16 +19,6 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     setError("");
 
     try {
-      const response = await fetch("/api/v1/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("ログインに失敗しました");
-      }
-
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ログインエラー");
@@ -67,15 +57,15 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
       {error && <div className="text-red-500 text-sm">{error}</div>}
 
-                 <Button 
-              type="submit" 
-              variant="primary" 
-              size="lg"
-              loading={loading} 
-              className="w-full text-lg shadow-lg shadow-pink-500/30"
-            >
-              ログイン
-            </Button>
+      <Button
+        type="submit"
+        variant="primary"
+        size="lg"
+        loading={loading}
+        className="w-full text-lg shadow-lg shadow-pink-500/30"
+      >
+        ログイン
+      </Button>
     </form>
   );
 };

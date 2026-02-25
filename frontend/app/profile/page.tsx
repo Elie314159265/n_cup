@@ -20,19 +20,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("/api/v1/profiles/me");
-        const data = await response.json();
-        setProfile(data);
-      } catch (error) {
-        console.error("プロフィール取得エラー:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+    setLoading(false);
   }, []);
 
   if (loading) return <Loading message="プロフィールを読み込み中..." />;

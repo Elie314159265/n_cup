@@ -22,7 +22,7 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -34,16 +34,6 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
-      const response = await fetch("/api/v1/profiles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("プロフィール作成に失敗しました");
-      }
-
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");

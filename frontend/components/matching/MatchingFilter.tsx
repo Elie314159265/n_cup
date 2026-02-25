@@ -7,7 +7,7 @@ interface MatchingFilterProps {
   onFilter: (filters: FilterOptions) => void;
 }
 
-interface FilterOptions {
+export interface FilterOptions {
   ageMin?: number;
   gender?: string;
   interests?: string;
@@ -24,7 +24,7 @@ export const MatchingFilter = ({ onFilter }: MatchingFilterProps) => {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     const newFilters = {

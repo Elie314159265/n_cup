@@ -42,7 +42,7 @@ interface RequestUser {
   age: number;
   interests: string;
   compatibility: number;
-  image: string;
+  image?: string;
   bio: string;
   message: string;
 }
@@ -184,7 +184,7 @@ export default function MessagesPage() {
   const [likedUsers, setLikedUsers] = useState<LikedUser[]>([]);
   const [requests, setRequests] = useState(DUMMY_REQUESTS);
   const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -300,23 +300,14 @@ export default function MessagesPage() {
         {/* 会話リスト */}
         <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-y-auto">
           <ConversationList
-            conversations={DUMMY_CONVERSATIONS}
-            onSelectConversation={setSelectedConversation}
-            selectedId={selectedConversation}
+            onSelectConversation={(id) => setSelectedConversation(id)}
           />
         </div>
 
         {/* チャットウィンドウ */}
         <div className="lg:col-span-2">
           {selectedConversation ? (
-            <ChatWindow
-              conversationId={selectedConversation}
-              messages={DUMMY_MESSAGES[selectedConversation] || []}
-              partner={
-                DUMMY_CONVERSATIONS.find((c) => c.id === selectedConversation)
-                  ?.partner
-              }
-            />
+            <ChatWindow conversationId={selectedConversation} />
           ) : (
             <div className="bg-white rounded-lg shadow h-full flex items-center justify-center">
               <div className="text-center text-gray-500">

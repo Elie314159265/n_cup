@@ -20,16 +20,6 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     setError("");
 
     try {
-      const response = await fetch("/api/v1/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("登録に失敗しました");
-      }
-
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "登録エラー");

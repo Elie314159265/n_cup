@@ -25,9 +25,9 @@ export const VoiceChatInterface = ({
     try {
       // Web Speech APIを使用
       const SpeechRecognition =
-       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).SpeechRecognition ||
-                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       recognition.lang = "ja-JP";
@@ -63,23 +63,7 @@ export const VoiceChatInterface = ({
     setIsResponding(true);
 
     try {
-      const response = await fetch("/api/v1/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ar_session_id: arSessionId,
-          message: userMessage,
-        }),
-      });
-
-      const data = await response.json();
-      setAiResponse(data.response);
-
-      // 音声出力
-      if (data.audioUrl) {
-        const audio = new Audio(data.audioUrl);
-        audio.play();
-      }
+      setAiResponse("（AIへの接続は準備中です）");
     } catch (_err) {
       setError("AI応答取得エラー");
     } finally {
