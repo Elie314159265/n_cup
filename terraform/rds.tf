@@ -46,7 +46,7 @@ resource "aws_db_instance" "main" {
   storage_type          = "gp3"
   storage_encrypted     = true
 
-  db_name  = "yoku_production"
+  db_name  = "link_persona_production"
   username = var.db_username
   password = var.db_password
 

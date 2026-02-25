@@ -4,10 +4,12 @@ class Profile < ApplicationRecord
 
   GENDERS = %w[male female other].freeze
   CUP_SIZES = %w[A B C D E F G H I J].freeze
+  MBTI_TYPES = %w[ISTJ ISFJ INFJ INTJ ISTP ISFP INFP INTP ESTP ESFP ENFP ENTP ESTJ ESFJ ENFJ ENTJ].freeze
 
   validates :display_name, presence: true, length: { maximum: 100 }
   validates :age, presence: true, numericality: { only_integer: true, greater_than: 0, less_than: 150 }
   validates :gender, presence: true, inclusion: { in: GENDERS }
   validates :cup_size, inclusion: { in: CUP_SIZES }, allow_nil: true
   validates :personality, length: { maximum: 50 }, allow_nil: true
+  validates :mbti, inclusion: { in: MBTI_TYPES }, allow_nil: true
 end

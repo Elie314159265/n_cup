@@ -34,3 +34,24 @@ output "s3_bucket_assets" {
   description = "S3 bucket for user assets"
   value       = aws_s3_bucket.user_assets.bucket
 }
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_client_id" {
+  description = "Cognito User Pool Client ID"
+  value       = aws_cognito_user_pool_client.main.id
+  sensitive   = true
+}
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for Rails API image"
+  value       = aws_ecr_repository.rails_api.repository_url
+}
+
+output "rails_api_irsa_role_arn" {
+  description = "IAM Role ARN for Rails API IRSA (set this in k8s/rails-api-sa.yaml annotation)"
+  value       = aws_iam_role.rails_api.arn
+}

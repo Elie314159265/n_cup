@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-northeast-1"
 }
 
 variable "project_name" {
   description = "Project name"
   type        = string
-  default     = "yoku"
+  default     = "link-persona"
 }
 
 variable "vpc_cidr" {
@@ -32,7 +32,7 @@ variable "db_password" {
 variable "eks_cluster_name" {
   description = "EKS cluster name"
   type        = string
-  default     = "yoku-cluster"
+  default     = "link-persona-cluster"
 }
 
 variable "node_instance_type" {
