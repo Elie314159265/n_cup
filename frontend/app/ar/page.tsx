@@ -228,17 +228,14 @@ function useVoiceChat(arSessionId: number | null) {
 function WaveformBars({ volume }: { volume: number }) {
   const heights = [0.4, 0.7, 1.0, 0.8, 0.6, 0.9, 0.5];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, height: 36 }}>
+    <div className="flex items-center gap-1 h-9">
       {heights.map((base, i) => (
         <div
           key={i}
           style={{
-            width: 5,
-            borderRadius: 4,
-            background: "#a78bfa",
             height: Math.max(6, base * (8 + (volume / 255) * 28)),
-            transition: "height 0.1s ease",
           }}
+          className="w-[5px] rounded bg-[#a78bfa] transition-[height] duration-100 ease-in-out"
         />
       ))}
     </div>
@@ -326,36 +323,19 @@ function ARPlacementModel({
       {/* ARオーバーレイUI */}
       <XRDomOverlay>
         {/* モデル切り替えボタン */}
-        <div
-          style={{
-            position: "fixed",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            gap: 8,
-            background: "rgba(0,0,0,0.55)",
-            padding: "8px 12px",
-            borderRadius: 999,
-            backdropFilter: "blur(8px)",
-          }}
-        >
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 flex gap-2 bg-black/55 px-3 py-2 rounded-full backdrop-blur">
           {MODELS.map((m) => (
             <button
               key={m.id}
               onClick={() => setSelectedModel(m.id)}
               style={{
-                padding: "6px 14px",
                 background: selectedModel === m.id ? "#7c3aed" : "transparent",
-                color: "#fff",
                 border:
                   selectedModel === m.id
                     ? "1px solid #7c3aed"
                     : "1px solid rgba(255,255,255,0.3)",
-                borderRadius: 999,
-                fontSize: 13,
-                cursor: "pointer",
               }}
+              className="px-[14px] py-[6px] text-white rounded-full text-[13px] cursor-pointer"
             >
               {m.label}
             </button>
@@ -364,72 +344,22 @@ function ARPlacementModel({
 
         {!placed ? (
           /* ── 配置前: 配置ボタン ── */
-          <div
-            style={{
-              position: "fixed",
-              bottom: 60,
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
             <button
               onClick={handlePlace}
-              style={{
-                padding: "14px 36px",
-                background: "#7c3aed",
-                color: "#fff",
-                border: "none",
-                borderRadius: 999,
-                fontSize: 16,
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-              }}
+              className="px-9 py-[14px] bg-[#7c3aed] text-white border-none rounded-full text-base font-bold cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
             >
               ここに配置
             </button>
-            <span
-              style={{
-                color: "rgba(255,255,255,0.85)",
-                fontSize: 12,
-                textShadow: "0 1px 3px rgba(0,0,0,0.9)",
-              }}
-            >
+            <span className="text-white/85 text-xs [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
               地面を向けてボタンを押すか、モデルをタップ
             </span>
           </div>
         ) : (
           /* ── 配置後: 音声会話UI ── */
-          <div
-            style={{
-              position: "fixed",
-              bottom: 36,
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
+          <div className="fixed bottom-9 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
             {/* ステータステキスト */}
-            <div
-              style={{
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 500,
-                textShadow: "0 1px 4px rgba(0,0,0,0.9)",
-                background: "rgba(0,0,0,0.5)",
-                padding: "6px 18px",
-                borderRadius: 999,
-                backdropFilter: "blur(8px)",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <div className="text-white text-sm font-medium [text-shadow:0_1px_4px_rgba(0,0,0,0.9)] bg-black/50 py-[6px] px-[18px] rounded-full backdrop-blur whitespace-nowrap">
               {isPlaying
                 ? "💬 相手が話しています..."
                 : isProcessing
@@ -444,28 +374,15 @@ function ARPlacementModel({
 
             {/* 会話履歴パネル */}
             {(transcript.length > 0 || streamingText) && (
-              <div
-                style={{
-                  maxHeight: 200,
-                  overflowY: "auto",
-                  width: "min(360px, 88vw)",
-                  background: "rgba(0,0,0,0.65)",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  backdropFilter: "blur(10px)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
+              <div className="max-h-[200px] overflow-y-auto w-[min(360px,88vw)] bg-black/65 rounded-xl px-[14px] py-[10px] backdrop-blur-[10px] flex flex-col gap-[6px]">
                 {transcript.map((entry, i) => (
                   <div
                     key={i}
-                    style={{
-                      color: entry.role === "user" ? "#c4b5fd" : "#e5e7eb",
-                      fontSize: 13,
-                      textAlign: entry.role === "user" ? "right" : "left",
-                    }}
+                    className={`text-[13px] ${
+                      entry.role === "user"
+                        ? "text-[#c4b5fd] text-right"
+                        : "text-[#e5e7eb] text-left"
+                    }`}
                   >
                     <span
                       style={{
@@ -473,29 +390,18 @@ function ARPlacementModel({
                           entry.role === "user"
                             ? "rgba(124,58,237,0.45)"
                             : "rgba(255,255,255,0.12)",
-                        padding: "4px 10px",
-                        borderRadius: 8,
-                        display: "inline-block",
-                        maxWidth: "90%",
                       }}
+                      className="px-[10px] py-1 rounded-lg inline-block max-w-[90%]"
                     >
                       {entry.text}
                     </span>
                   </div>
                 ))}
                 {streamingText && (
-                  <div style={{ color: "#e5e7eb", fontSize: 13 }}>
-                    <span
-                      style={{
-                        background: "rgba(255,255,255,0.12)",
-                        padding: "4px 10px",
-                        borderRadius: 8,
-                        display: "inline-block",
-                        maxWidth: "90%",
-                      }}
-                    >
+                  <div className="text-[#e5e7eb] text-[13px]">
+                    <span className="bg-white/[0.12] px-[10px] py-1 rounded-lg inline-block max-w-[90%]">
                       {streamingText}
-                      <span style={{ opacity: 0.6 }}>▌</span>
+                      <span className="opacity-60">▌</span>
                     </span>
                   </div>
                 )}
@@ -511,9 +417,6 @@ function ARPlacementModel({
               }}
               disabled={isPlaying || isProcessing}
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
                 background: isRecording
                   ? "#ef4444"
                   : isPlaying || isProcessing
@@ -522,34 +425,23 @@ function ARPlacementModel({
                 border: isRecording
                   ? "4px solid rgba(252,165,165,0.6)"
                   : "4px solid rgba(255,255,255,0.25)",
-                color: "#fff",
-                fontSize: 32,
-                cursor: isPlaying || isProcessing ? "not-allowed" : "pointer",
                 boxShadow: isRecording
                   ? "0 0 0 14px rgba(239,68,68,0.2), 0 4px 24px rgba(0,0,0,0.4)"
                   : "0 4px 24px rgba(0,0,0,0.4)",
-                transition: "all 0.15s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                outline: "none",
                 WebkitTapHighlightColor: "transparent",
               }}
+              className={`w-20 h-20 rounded-full text-white text-[32px] flex items-center justify-center outline-none transition-all duration-150 ease-in-out ${
+                isPlaying || isProcessing
+                  ? "cursor-not-allowed"
+                  : "cursor-pointer"
+              }`}
             >
               {isProcessing ? "⏳" : "🎤"}
             </button>
 
             {/* エラー表示 */}
             {micError && (
-              <div
-                style={{
-                  background: "rgba(200,0,0,0.85)",
-                  color: "#fff",
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  fontSize: 13,
-                }}
-              >
+              <div className="bg-[rgba(200,0,0,0.85)] text-white py-2 px-4 rounded-lg text-[13px]">
                 {micError}
               </div>
             )}
@@ -664,15 +556,7 @@ function ArPageInner() {
   };
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        background: "#0a0a0a",
-        position: "relative",
-        touchAction: "none",
-      }}
-    >
+    <div className="w-screen h-screen bg-[#0a0a0a] relative touch-none">
       {/* Three.js Canvas */}
       <Canvas
         camera={{ position: [0, 0, 3], fov: 50 }}
@@ -690,38 +574,19 @@ function ArPageInner() {
       </Canvas>
 
       {/* モデル選択UI */}
-      <div
-        style={{
-          position: "absolute",
-          top: 20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10,
-          display: "flex",
-          gap: 8,
-          background: "rgba(0,0,0,0.6)",
-          padding: "8px 12px",
-          borderRadius: 999,
-          backdropFilter: "blur(8px)",
-        }}
-      >
+      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-black/60 px-3 py-2 rounded-full backdrop-blur">
         {MODELS.map((m) => (
           <button
             key={m.id}
             onClick={() => setSelectedModel(m.id)}
             style={{
-              padding: "6px 14px",
               background: selectedModel === m.id ? "#7c3aed" : "transparent",
-              color: "#fff",
               border:
                 selectedModel === m.id
                   ? "1px solid #7c3aed"
                   : "1px solid rgba(255,255,255,0.3)",
-              borderRadius: 999,
-              fontSize: 13,
-              cursor: "pointer",
-              transition: "all 0.15s",
             }}
+            className="px-[14px] py-[6px] text-white rounded-full text-[13px] cursor-pointer transition-all duration-150"
           >
             {m.label}
           </button>
@@ -731,44 +596,14 @@ function ArPageInner() {
       {/* AR開始ボタン（常時表示・エラーハンドリング付き） */}
       <button
         onClick={handleEnterAR}
-        style={{
-          position: "fixed",
-          bottom: 48,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 20,
-          padding: "14px 40px",
-          background: "#7c3aed",
-          color: "#fff",
-          border: "none",
-          borderRadius: 999,
-          fontSize: 16,
-          fontWeight: "bold",
-          cursor: "pointer",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
-        }}
+        className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 px-10 py-[14px] bg-[#7c3aed] text-white border-none rounded-full text-base font-bold cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
       >
         📷 ARで表示
       </button>
 
       {/* エラーメッセージ */}
       {(arError || sessionError) && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 120,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 20,
-            background: "rgba(200,0,0,0.85)",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: 12,
-            fontSize: 13,
-            maxWidth: "80vw",
-            textAlign: "center",
-          }}
-        >
+        <div className="fixed bottom-[120px] left-1/2 -translate-x-1/2 z-20 bg-[rgba(200,0,0,0.85)] text-white py-[10px] px-5 rounded-xl text-[13px] max-w-[80vw] text-center">
           {arError ?? sessionError}
         </div>
       )}
@@ -781,18 +616,7 @@ export default function ArPage() {
   return (
     <Suspense
       fallback={
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            background: "#0a0a0a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontSize: 18,
-          }}
-        >
+        <div className="w-screen h-screen bg-[#0a0a0a] flex items-center justify-center text-white text-lg">
           読み込み中...
         </div>
       }

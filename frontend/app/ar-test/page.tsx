@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Stage, OrbitControls, Gltf} from "@react-three/drei";
+import { Stage, OrbitControls, Gltf } from "@react-three/drei";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 // アバターを表示するコンポーネント
@@ -48,28 +48,13 @@ export default function AvatarPage() {
   }, []);
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
+    <div className="w-screen h-screen relative overflow-hidden">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          backgroundColor: "#111",
-          zIndex: 0,
-        }}
+        className="absolute inset-0 w-full h-full object-cover bg-[#111] z-0"
       />
 
       <Canvas
@@ -95,20 +80,12 @@ export default function AvatarPage() {
       </Canvas>
 
       {/* UIを重ねる場合はここに記述 */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          width: "100%",
-          textAlign: "center",
-          zIndex: 2,
-        }}
-      >
-        <h1 style={{ color: "white", textShadow: "2px 2px 4px black" }}>
+      <div className="absolute bottom-5 w-full text-center z-[2]">
+        <h1 className="text-white [text-shadow:2px_2px_4px_black]">
           Avatar AR Preview
         </h1>
         {cameraError && (
-          <p style={{ color: "#ffdddd", textShadow: "1px 1px 2px black" }}>
+          <p className="text-[#ffdddd] [text-shadow:1px_1px_2px_black]">
             {cameraError}
           </p>
         )}

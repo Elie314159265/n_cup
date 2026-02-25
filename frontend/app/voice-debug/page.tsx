@@ -111,17 +111,14 @@ function useVoiceChat() {
 function WaveformBars({ volume }: { volume: number }) {
   const heights = [0.4, 0.7, 1.0, 0.8, 0.6, 0.9, 0.5];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, height: 44 }}>
+    <div className="flex items-center gap-[5px] h-11">
       {heights.map((base, i) => (
         <div
           key={i}
           style={{
-            width: 6,
-            borderRadius: 4,
-            background: "linear-gradient(to top, #7c3aed, #a78bfa)",
             height: Math.max(6, base * (10 + (volume / 255) * 34)),
-            transition: "height 0.08s ease",
           }}
+          className="w-[6px] rounded bg-gradient-to-t from-[#7c3aed] to-[#a78bfa] transition-[height] duration-[80ms] ease-in-out"
         />
       ))}
     </div>
@@ -137,71 +134,26 @@ export default function VoiceDebugPage() {
   const nextFile = RESPONSE_AUDIO_FILES[voiceChat.responseIndex % totalFiles];
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        background: "linear-gradient(135deg, #0f0a1e 0%, #1a0f3c 100%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "sans-serif",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
+    <div className="w-screen h-screen bg-[linear-gradient(135deg,#0f0a1e_0%,#1a0f3c_100%)] flex flex-col items-center justify-center font-sans relative overflow-hidden">
       {/* デバッグバッジ */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          background: "rgba(124,58,237,0.3)",
-          border: "1px solid #7c3aed",
-          color: "#a78bfa",
-          padding: "4px 10px",
-          borderRadius: 6,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: 1,
-        }}
-      >
+      <div className="absolute top-3 left-3 bg-[rgba(124,58,237,0.3)] border border-[#7c3aed] text-[#a78bfa] px-[10px] py-1 rounded-md text-[11px] font-bold tracking-[1px]">
         VOICE DEBUG
       </div>
 
       {/* モデル切り替え */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: 8,
-          background: "rgba(255,255,255,0.07)",
-          padding: "6px 10px",
-          borderRadius: 999,
-          backdropFilter: "blur(8px)",
-        }}
-      >
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-2 bg-white/[0.07] px-[10px] py-[6px] rounded-full backdrop-blur">
         {MODELS.map((m) => (
           <button
             key={m.id}
             onClick={() => setSelectedModel(m.id)}
             style={{
-              padding: "5px 14px",
               background: selectedModel === m.id ? "#7c3aed" : "transparent",
-              color: "#fff",
               border:
                 selectedModel === m.id
                   ? "1px solid #7c3aed"
                   : "1px solid rgba(255,255,255,0.2)",
-              borderRadius: 999,
-              fontSize: 13,
-              cursor: "pointer",
-              transition: "all 0.15s",
             }}
+            className="px-[14px] py-[5px] text-white rounded-full text-[13px] cursor-pointer transition-all duration-150"
           >
             {m.label}
           </button>
@@ -209,7 +161,7 @@ export default function VoiceDebugPage() {
       </div>
 
       {/* 3Dアバター */}
-      <div style={{ width: "100%", height: "65vh" }}>
+      <div className="w-full h-[65vh]">
         <Canvas
           camera={{ position: [0, 0, 3], fov: 50 }}
           gl={{ antialias: true }}
@@ -233,28 +185,9 @@ export default function VoiceDebugPage() {
       </div>
 
       {/* 会話コントロール */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 14,
-          paddingBottom: 24,
-        }}
-      >
+      <div className="flex flex-col items-center gap-[14px] pb-6">
         {/* ステータス */}
-        <div
-          style={{
-            color: "#e2d9f3",
-            fontSize: 15,
-            fontWeight: 500,
-            background: "rgba(255,255,255,0.08)",
-            padding: "7px 20px",
-            borderRadius: 999,
-            minWidth: 200,
-            textAlign: "center",
-          }}
-        >
+        <div className="text-[#e2d9f3] text-[15px] font-medium bg-white/[0.08] py-[7px] px-5 rounded-full min-w-[200px] text-center">
           {voiceChat.isPlaying
             ? "💬 相手が話しています..."
             : voiceChat.isRecording
@@ -282,9 +215,6 @@ export default function VoiceDebugPage() {
           }}
           disabled={voiceChat.isPlaying}
           style={{
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
             background: voiceChat.isRecording
               ? "#ef4444"
               : voiceChat.isPlaying
@@ -293,32 +223,19 @@ export default function VoiceDebugPage() {
             border: voiceChat.isRecording
               ? "4px solid rgba(252,165,165,0.5)"
               : "4px solid rgba(255,255,255,0.15)",
-            color: "#fff",
-            fontSize: 30,
-            cursor: voiceChat.isPlaying ? "not-allowed" : "pointer",
             boxShadow: voiceChat.isRecording
               ? "0 0 0 16px rgba(239,68,68,0.15), 0 4px 20px rgba(0,0,0,0.5)"
               : "0 4px 20px rgba(0,0,0,0.4)",
-            transition: "all 0.15s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            outline: "none",
-            userSelect: "none",
           }}
+          className={`w-20 h-20 rounded-full text-white text-[30px] flex items-center justify-center outline-none select-none transition-all duration-150 ease-in-out ${
+            voiceChat.isPlaying ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
           🎤
         </button>
 
         {/* デバッグ情報 */}
-        <div
-          style={{
-            color: "rgba(167,139,250,0.6)",
-            fontSize: 11,
-            textAlign: "center",
-            lineHeight: 1.6,
-          }}
-        >
+        <div className="text-[rgba(167,139,250,0.6)] text-[11px] text-center leading-relaxed">
           次のファイル: {nextFile}
           <br />
           再生済み: {voiceChat.responseIndex}/{totalFiles} (ループ)
@@ -326,17 +243,7 @@ export default function VoiceDebugPage() {
 
         {/* エラー */}
         {voiceChat.micError && (
-          <div
-            style={{
-              background: "rgba(200,0,0,0.8)",
-              color: "#fff",
-              padding: "10px 18px",
-              borderRadius: 10,
-              fontSize: 13,
-              maxWidth: 320,
-              textAlign: "center",
-            }}
-          >
+          <div className="bg-[rgba(200,0,0,0.8)] text-white py-[10px] px-[18px] rounded-[10px] text-[13px] max-w-[320px] text-center">
             {voiceChat.micError}
           </div>
         )}
