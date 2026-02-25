@@ -235,7 +235,8 @@ resource "aws_iam_policy" "rails_api_cognito" {
         Effect = "Allow"
         Action = [
           "cognito-idp:GetUser",
-          "cognito-idp:AdminGetUser"
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminConfirmSignUp"
         ]
         Resource = aws_cognito_user_pool.main.arn
       }
