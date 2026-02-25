@@ -17,7 +17,7 @@ spec:
       serviceAccountName: rails-api
       containers:
       - name: rails
-        image: 276713243798.dkr.ecr.ap-northeast-1.amazonaws.com/link-persona-api:latest
+        image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com/link-persona-api:latest
         args: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
         ports:
         - containerPort: 3000
