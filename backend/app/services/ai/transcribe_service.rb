@@ -1,7 +1,7 @@
 module Ai
   class TranscribeService
     def initialize
-      @client = Aws::TranscribeService::Client.new(region: ENV['AWS_REGION'] || 'us-east-1')
+      @client = Aws::TranscribeService::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
       @s3_service = Storage::S3Service.new
     end
 

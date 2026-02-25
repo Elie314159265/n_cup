@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  redis_url: "redis://yoku-redis.xxxxx.0001.use1.cache.amazonaws.com:6379"  # Replace with actual Redis endpoint
-  s3_bucket_name: "yoku-user-assets-production"
+  redis_url: "redis://link_persona-redis.xxxxx.0001.apne1.cache.amazonaws.com:6379"  # Replace with actual Redis endpoint
+  s3_bucket_name: "link_persona-user-assets-production"
   cloudfront_domain: "xxxxx.cloudfront.net"  # Replace with actual CloudFront domain
