@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name"
   type        = string
-  default     = "link_persona"
+  default     = "link-persona"
 }
 
 variable "vpc_cidr" {
@@ -32,7 +32,7 @@ variable "db_password" {
 variable "eks_cluster_name" {
   description = "EKS cluster name"
   type        = string
-  default     = "link_persona-cluster"
+  default     = "link-persona-cluster"
 }
 
 variable "node_instance_type" {

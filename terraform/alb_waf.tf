@@ -12,14 +12,6 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "HTTPS from internet (future use)"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -71,7 +63,38 @@ resource "aws_lb_target_group" "rails_api" {
   }
 }
 
-# ALB Listener HTTP (forward to Rails API)
+# Target Group for Action Cable (WebSocket)
+resource "aws_lb_target_group" "action_cable" {
+  name        = "${var.project_name}-cable-tg"
+  port        = 28080
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    path                = "/up"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  # WebSocket接続の持続性のためスティッキーセッションを有効化
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400
+    enabled         = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-cable-tg"
+  }
+}
+
+# ALB Listener HTTP - デフォルトはRails APIへフォワード
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -83,20 +106,22 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# ALB Listener HTTPS (future use - requires ACM certificate)
-# Uncomment when you have a domain and certificate
-# resource "aws_lb_listener" "https" {
-#   load_balancer_arn = aws_lb.main.arn
-#   port              = "443"
-#   protocol          = "HTTPS"
-#   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-#   certificate_arn   = "arn:aws:acm:ap-northeast-1:xxxx:certificate/xxxx"  # Replace with your ACM certificate ARN
-#
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.rails_api.arn
-#   }
-# }
+# Action Cable WebSocketルーティング (/cable → action-cable target group)
+resource "aws_lb_listener_rule" "action_cable" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.action_cable.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/cable", "/cable/*"]
+    }
+  }
+}
 
 # WAF Web ACL
 resource "aws_wafv2_web_acl" "main" {

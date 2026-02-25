@@ -10,7 +10,7 @@ terraform {
 
   # Uncomment for remote state management
   # backend "s3" {
-  #   bucket = "link_persona-terraform-state"
+  #   bucket = "link-persona-terraform-state"
   #   key    = "production/terraform.tfstate"
   #   region = "ap-northeast-1"
   # }
@@ -21,7 +21,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "link_persona"
+      Project     = "link-persona"
       Environment = "production"
       ManagedBy   = "terraform"
     }
