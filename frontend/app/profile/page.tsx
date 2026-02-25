@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
 
@@ -16,12 +16,8 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  const [profile] = useState<UserProfile | null>(null);
+  const [loading] = useState(false);
 
   if (loading) return <Loading message="プロフィールを読み込み中..." />;
 

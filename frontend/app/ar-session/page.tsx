@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
 import { AREnvironmentSelector } from "@/components/ar-scene/AREnvironmentSelector";
@@ -9,16 +9,11 @@ import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
 function ARSessionContent() {
   const searchParams = useSearchParams();
   const conversationId = searchParams.get("conversation_id");
-  const [arSessionId, setArSessionId] = useState<string | null>(null);
-  const [selectedEnvironment, setSelectedEnvironment] =
+  const arSessionId = conversationId ? `session-${conversationId}` : null;
+  const [_selectedEnvironment, setSelectedEnvironment] =
     useState<string>("cafe");
   const [isStarted, setIsStarted] = useState(false);
   const [partnerName] = useState("AIアバター");
-
-  useEffect(() => {
-    if (!conversationId) return;
-    setArSessionId(`session-${conversationId}`);
-  }, [conversationId, selectedEnvironment]);
 
   if (!conversationId) {
     return (

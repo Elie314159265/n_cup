@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Loading } from "@/components/common/Loading";
 
@@ -23,12 +23,8 @@ interface ConversationListProps {
 export const ConversationList = ({
   onSelectConversation,
 }: ConversationListProps) => {
-  const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  const [conversations] = useState<ConversationItem[]>([]);
+  const [loading] = useState(false);
 
   if (loading) return <Loading message="メッセージを読み込み中..." />;
 

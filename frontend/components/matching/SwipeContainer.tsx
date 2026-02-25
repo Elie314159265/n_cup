@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SwipeCard } from "./SwipeCard";
 import { Loading } from "@/components/common/Loading";
 
@@ -19,13 +19,9 @@ interface SwipeContainerProps {
 }
 
 export const SwipeContainer = ({ onLike, onPass }: SwipeContainerProps) => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  const [loading] = useState(false);
 
   const handleLike = async () => {
     const profile = profiles[currentIndex];

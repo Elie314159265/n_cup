@@ -9,7 +9,7 @@ interface VoiceChatInterfaceProps {
 }
 
 export const VoiceChatInterface = ({
-  arSessionId,
+  arSessionId: _arSessionId,
   partnerName = "AIアバター",
 }: VoiceChatInterfaceProps) => {
   const [isListening, setIsListening] = useState(false);
@@ -59,7 +59,7 @@ export const VoiceChatInterface = ({
     }
   };
 
-  const sendToAI = async (userMessage: string) => {
+  const sendToAI = async (_userMessage: string) => {
     setIsResponding(true);
 
     try {
