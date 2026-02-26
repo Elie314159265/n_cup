@@ -178,7 +178,7 @@ resource "aws_iam_policy" "rails_api_bedrock" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0"
         ]
       }
     ]
