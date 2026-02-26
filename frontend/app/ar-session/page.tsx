@@ -23,6 +23,8 @@ function ARSessionContent() {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [isStarted, setIsStarted] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentViseme, setCurrentViseme] = useState("sil");
 
   // 会話データとパートナープロフィールを取得
   useEffect(() => {
@@ -127,13 +129,8 @@ function ARSessionContent() {
           <h2 className="text-xl font-bold text-gray-900 mb-4">AR空間</h2>
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <AvatarViewer
-              avatarData={{
-                hairStyle: "long",
-                hairColor: "brown",
-                skinColor: "light",
-                clothing: "casual",
-                bodyType: "B",
-              }}
+              isSpeaking={isSpeaking}
+              currentViseme={currentViseme}
             />
           </div>
         </div>
@@ -149,6 +146,10 @@ function ARSessionContent() {
                 partnerVoiceId={partnerVoiceId}
                 conversationId={conversationId}
                 onEnd={() => router.push("/matches")}
+                onVisemeChange={(viseme) => {
+                  setCurrentViseme(viseme);
+                  setIsSpeaking(viseme !== "sil");
+                }}
               />
             )}
           </div>
