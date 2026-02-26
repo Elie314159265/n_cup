@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Link2, AlertTriangle, Scan, MessageCircle } from "lucide-react";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
@@ -30,6 +30,11 @@ function ARSessionContent() {
   const [isStarted, setIsStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentViseme, setCurrentViseme] = useState("sil");
+
+  const handleVisemeChange = useCallback((viseme: string) => {
+    setCurrentViseme(viseme);
+    setIsSpeaking(viseme !== "sil");
+  }, []);
 
   // 会話データとパートナープロフィールを取得
   useEffect(() => {
@@ -190,10 +195,7 @@ function ARSessionContent() {
                   partnerVoiceId={partnerVoiceId}
                   conversationId={conversationId}
                   onEnd={() => router.push("/matches")}
-                  onVisemeChange={(viseme) => {
-                    setCurrentViseme(viseme);
-                    setIsSpeaking(viseme !== "sil");
-                  }}
+                  onVisemeChange={handleVisemeChange}
                 />
               )}
             </div>
