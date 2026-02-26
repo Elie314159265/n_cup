@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/common/Button";
 import { aiChat, aiSpeech } from "@/actions/ai";
 import { endConversation } from "@/actions/conversations";
+import type { Viseme } from "@/types/ai";
 
 type Step = "idle" | "listening" | "thinking" | "speaking" | "error";
 
@@ -18,6 +19,25 @@ interface VoiceChatInterfaceProps {
   partnerVoiceId?: string;
   conversationId?: number;
   onEnd?: () => void;
+  onVisemeChange?: (viseme: string) => void;
+}
+
+// binary search: currentTimeMs 以下で最後の viseme を返す
+function findCurrentViseme(visemes: Viseme[], currentTimeMs: number): string {
+  if (visemes.length === 0) return "sil";
+  let lo = 0;
+  let hi = visemes.length - 1;
+  let result = visemes[0].value;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (visemes[mid].time <= currentTimeMs) {
+      result = visemes[mid].value;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return result;
 }
 
 export const VoiceChatInterface = ({
@@ -26,6 +46,7 @@ export const VoiceChatInterface = ({
   partnerVoiceId = "Mizuki",
   conversationId,
   onEnd,
+  onVisemeChange,
 }: VoiceChatInterfaceProps) => {
   const [step, setStep] = useState<Step>("idle");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -37,6 +58,35 @@ export const VoiceChatInterface = ({
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finalTranscriptRef = useRef("");
+  const rafRef = useRef<number | null>(null);
+  const visemesRef = useRef<Viseme[]>([]);
+
+  const stopVisemeLoop = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    onVisemeChange?.("sil");
+  }, [onVisemeChange]);
+
+  const startVisemeLoop = useCallback(
+    (audio: HTMLAudioElement, visemes: Viseme[]) => {
+      visemesRef.current = visemes;
+      const tick = () => {
+        const currentTimeMs = audio.currentTime * 1000;
+        onVisemeChange?.(findCurrentViseme(visemesRef.current, currentTimeMs));
+        if (!audio.paused && !audio.ended) {
+          rafRef.current = requestAnimationFrame(tick);
+        }
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    },
+    [onVisemeChange],
+  );
+
+  useEffect(() => {
+    return () => stopVisemeLoop();
+  }, [stopVisemeLoop]);
 
   const processAiResponse = useCallback(
     async (userText: string) => {
@@ -55,6 +105,7 @@ export const VoiceChatInterface = ({
 
         // 音声合成（失敗しても会話は続ける）
         let audioUrl: string | null = null;
+        let visemes: Viseme[] = [];
         try {
           const speechRes = await aiSpeech({
             text: aiText,
@@ -62,7 +113,8 @@ export const VoiceChatInterface = ({
             engine: "neural",
           });
           audioUrl = speechRes.audio_url;
-          console.log("[VoiceChat] 音声URL:", audioUrl);
+          visemes = speechRes.visemes ?? [];
+          console.log("[VoiceChat] 音声URL:", audioUrl, "visemes:", visemes.length);
         } catch {
           // Polly失敗 → テキストのみ表示
           console.warn("[VoiceChat] Polly音声合成失敗 → テキストのみ表示");
@@ -75,8 +127,9 @@ export const VoiceChatInterface = ({
           setStep("speaking");
           const audio = new Audio(audioUrl);
           audioRef.current = audio;
-          audio.onended = () => setStep("idle");
-          audio.onerror = () => setStep("idle");
+          audio.onplaying = () => startVisemeLoop(audio, visemes);
+          audio.onended = () => { stopVisemeLoop(); setStep("idle"); };
+          audio.onerror = () => { stopVisemeLoop(); setStep("idle"); };
           await audio.play();
         } else {
           setStep("idle");
@@ -86,11 +139,10 @@ export const VoiceChatInterface = ({
         setStep("error");
       }
     },
-    [arSessionId, partnerVoiceId],
+    [arSessionId, partnerVoiceId, startVisemeLoop, stopVisemeLoop],
   );
 
   const startListening = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).SpeechRecognition ||
@@ -181,12 +233,16 @@ export const VoiceChatInterface = ({
           {partnerName}と会話中
         </p>
         {step === "idle" && (
-          <p className="text-gray-500 text-sm">ボタンを押して話しかけてください</p>
+          <p className="text-gray-500 text-sm">
+            ボタンを押して話しかけてください
+          </p>
         )}
         {step === "listening" && (
           <div className="flex items-center gap-2 text-blue-600">
             <span className="animate-pulse text-lg">🎤</span>
-            <span className="text-sm">聞き取り中…（話し終わると自動で送信）</span>
+            <span className="text-sm">
+              聞き取り中…（話し終わると自動で送信）
+            </span>
           </div>
         )}
         {step === "thinking" && (
@@ -232,7 +288,9 @@ export const VoiceChatInterface = ({
           {history.map((turn, i) => (
             <div key={i} className="space-y-2">
               <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                <p className="text-xs font-semibold text-blue-700 mb-1">あなた</p>
+                <p className="text-xs font-semibold text-blue-700 mb-1">
+                  あなた
+                </p>
                 <p className="text-gray-800 text-sm">{turn.user}</p>
               </div>
               <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">

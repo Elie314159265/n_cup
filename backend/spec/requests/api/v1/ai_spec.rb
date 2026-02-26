@@ -42,9 +42,13 @@ RSpec.describe 'Api::V1::Ai', type: :request do
       allow(Ai::PollyService).to receive(:new).and_return(polly_double)
     end
 
-    it '200と音声URLを返す' do
+    it '200と音声URLとvisemesを返す' do
       allow(polly_double).to receive(:synthesize_speech)
-        .and_return({ audio_url: 'https://example.com/audio.mp3' })
+        .and_return({
+          audio_url: 'https://example.com/audio.mp3',
+          duration: 1.2,
+          visemes: [ { time: 0, value: 'sil' }, { time: 100, value: 'a' } ]
+        })
 
       post '/api/v1/ai/speech',
            params: { text: 'こんにちは', voice_id: 'Mizuki', engine: 'neural' },
@@ -52,6 +56,7 @@ RSpec.describe 'Api::V1::Ai', type: :request do
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
       expect(body['audio_url']).to be_present
+      expect(body['visemes']).to be_an(Array)
     end
 
     it 'Polly失敗時は500を返す' do

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Link2, AlertTriangle, Scan, MessageCircle } from "lucide-react";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
@@ -28,6 +28,29 @@ function ARSessionContent() {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [isStarted, setIsStarted] = useState(false);
+  // viseme はRAFループから毎フレーム更新されるためrefで管理（setState不要）
+  const visemeStateRef = useRef({ viseme: "sil", isSpeaking: false });
+  const silTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleVisemeChange = useCallback((viseme: string) => {
+    if (viseme !== "sil") {
+      // 非sil: 即座に isSpeaking=true、停止タイマーをキャンセル
+      if (silTimerRef.current) {
+        clearTimeout(silTimerRef.current);
+        silTimerRef.current = null;
+      }
+      visemeStateRef.current = { viseme, isSpeaking: true };
+    } else {
+      // sil: viseme は即更新、isSpeaking=false は400ms後（中間の無音を無視）
+      visemeStateRef.current = { ...visemeStateRef.current, viseme };
+      if (!silTimerRef.current) {
+        silTimerRef.current = setTimeout(() => {
+          visemeStateRef.current = { viseme: "sil", isSpeaking: false };
+          silTimerRef.current = null;
+        }, 400);
+      }
+    }
+  }, []);
 
   // 会話データとパートナープロフィールを取得
   useEffect(() => {
@@ -168,15 +191,7 @@ function ARSessionContent() {
               <Scan size={12} /> AR空間
             </h2>
             <div className="card overflow-hidden">
-              <AvatarViewer
-                avatarData={{
-                  hairStyle: "long",
-                  hairColor: "brown",
-                  skinColor: "light",
-                  clothing: "casual",
-                  bodyType: "B",
-                }}
-              />
+              <AvatarViewer visemeStateRef={visemeStateRef} />
             </div>
           </div>
 
@@ -193,6 +208,7 @@ function ARSessionContent() {
                   partnerVoiceId={partnerVoiceId}
                   conversationId={conversationId}
                   onEnd={() => router.push("/matches")}
+                  onVisemeChange={handleVisemeChange}
                 />
               )}
             </div>

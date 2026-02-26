@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bomb, Heart, CheckCircle2, Send, Search } from "lucide-react";
+import { Bomb, Heart, CheckCircle2, Send } from "lucide-react";
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import { Explosion } from "@/components/discover/bomb/Explosion";
+import { HeartExplosion } from "@/components/discover/match/Heart";
 import {
   MatchingFilter,
   FilterOptions,
@@ -77,6 +78,7 @@ export default function DiscoverPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [showExplosion, setShowExplosion] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
 
   // マッチング候補を取得（バックエンド対応後に実データが入る）
   useEffect(() => {
@@ -105,7 +107,10 @@ export default function DiscoverPage() {
   };
 
   const handleLike = () => {
-    setIsModalOpen(true);
+    setShowHeart(true);
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 1200);
   };
 
   const handleSendRequest = async () => {
@@ -137,6 +142,10 @@ export default function DiscoverPage() {
     setCurrentIndex((prev) => prev + 1);
   };
 
+  const handleHeartComplete = () => {
+    setShowHeart(false);
+  };
+
   return (
     <div className="page-bg min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -148,6 +157,15 @@ export default function DiscoverPage() {
             </Canvas>
           </div>
         )}
+        {/* ハートエフェクト（右スワイプ時） */}
+        {showHeart && (
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
+              <HeartExplosion onComplete={handleHeartComplete} />
+            </Canvas>
+          </div>
+        )}
+
         <div className="text-center mb-10">
           <h1 className="text-3xl font-black gradient-text mb-2">
             気になる相手を探す
