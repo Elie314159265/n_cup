@@ -40,7 +40,11 @@ const createCircularImage = (imageUrl: string): Promise<string> => {
                 return;
             }
             
+            // 背景を透明に
+            ctx.clearRect(0, 0, size, size);
+            
             // 円形にクリップ
+            ctx.save();
             ctx.beginPath();
             ctx.arc(size / 2, size / 2, size / 2 - 6, 0, Math.PI * 2);
             ctx.closePath();
@@ -49,9 +53,10 @@ const createCircularImage = (imageUrl: string): Promise<string> => {
             // 画像を描画
             ctx.drawImage(img, 0, 0, size, size);
             
-            // クリップをリセットして白い枠線を描画
+            // クリップをリセット
             ctx.restore();
-            ctx.save();
+            
+            // 白い枠線を描画
             ctx.beginPath();
             ctx.arc(size / 2, size / 2, size / 2 - 6, 0, Math.PI * 2);
             ctx.strokeStyle = 'white';
