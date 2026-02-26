@@ -143,7 +143,6 @@ export const VoiceChatInterface = ({
   );
 
   const startListening = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).SpeechRecognition ||
@@ -234,12 +233,16 @@ export const VoiceChatInterface = ({
           {partnerName}と会話中
         </p>
         {step === "idle" && (
-          <p className="text-gray-500 text-sm">ボタンを押して話しかけてください</p>
+          <p className="text-gray-500 text-sm">
+            ボタンを押して話しかけてください
+          </p>
         )}
         {step === "listening" && (
           <div className="flex items-center gap-2 text-blue-600">
             <span className="animate-pulse text-lg">🎤</span>
-            <span className="text-sm">聞き取り中…（話し終わると自動で送信）</span>
+            <span className="text-sm">
+              聞き取り中…（話し終わると自動で送信）
+            </span>
           </div>
         )}
         {step === "thinking" && (
@@ -285,7 +288,9 @@ export const VoiceChatInterface = ({
           {history.map((turn, i) => (
             <div key={i} className="space-y-2">
               <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                <p className="text-xs font-semibold text-blue-700 mb-1">あなた</p>
+                <p className="text-xs font-semibold text-blue-700 mb-1">
+                  あなた
+                </p>
                 <p className="text-gray-800 text-sm">{turn.user}</p>
               </div>
               <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
