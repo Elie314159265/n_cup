@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useMemo, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
 import { createXRStore, XR, useXRHitTest } from "@react-three/xr";
 import * as THREE from "three";
@@ -124,25 +124,39 @@ function AvatarModel({ visemeStateRef }: { visemeStateRef: React.MutableRefObjec
   return <primitive object={scene} />;
 }
 
-// AR空間でのアバター（床面ヒットテストで位置追従）
+// AR空間でのアバター（カメラ前方1.5mに配置）
 function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefObject<VisemeState> }) {
   const groupRef = useRef<THREE.Group>(null);
+  const floorYRef = useRef(0);
+  const { camera } = useThree();
+  const tmpDir = useMemo(() => new THREE.Vector3(), []);
   const matrixHelper = useMemo(() => new THREE.Matrix4(), []);
 
-  // 床面ヒットテストでアバターをリアルタイム追従
+  // 床面ヒットテストで床のY座標のみ記録
   useXRHitTest(
     (results: XRHitTestResult[], getWorldMatrix: (target: THREE.Matrix4, result: XRHitTestResult) => void) => {
-      if (results.length === 0 || !groupRef.current) return;
+      if (results.length === 0) return;
       getWorldMatrix(matrixHelper, results[0]);
-      groupRef.current.position.setFromMatrixPosition(matrixHelper);
-      // Y軸回転のみ抽出（地面の法線に合わせて回転させない）
-      const q = new THREE.Quaternion().setFromRotationMatrix(matrixHelper);
-      const euler = new THREE.Euler().setFromQuaternion(q);
-      groupRef.current.rotation.y = euler.y;
+      floorYRef.current = new THREE.Vector3().setFromMatrixPosition(matrixHelper).y;
     },
     "viewer",
     "plane",
   );
+
+  // カメラ前方1.5mにアバターを配置し、ユーザーに向ける
+  useFrame(() => {
+    if (!groupRef.current) return;
+    camera.getWorldDirection(tmpDir);
+    tmpDir.y = 0;
+    if (tmpDir.lengthSq() < 0.001) return;
+    tmpDir.normalize();
+    groupRef.current.position.set(
+      camera.position.x + tmpDir.x * 1.5,
+      floorYRef.current,
+      camera.position.z + tmpDir.z * 1.5,
+    );
+    groupRef.current.rotation.y = Math.atan2(tmpDir.x, tmpDir.z) + Math.PI;
+  });
 
   return (
     <>

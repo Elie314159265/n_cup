@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Link2, AlertTriangle, Scan, MessageCircle } from "lucide-react";
+import { Link2, AlertTriangle, Scan } from "lucide-react";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
 import { AREnvironmentSelector } from "@/components/ar-scene/AREnvironmentSelector";
 import { AvatarViewer } from "@/components/ar-scene/AvatarViewer";
@@ -182,37 +182,25 @@ function ARSessionContent() {
     partnerProfile?.gender === "male" ? "Takumi" : "Mizuki";
 
   return (
-    <div className="page-bg min-h-screen py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* AR表示エリア */}
-          <div>
-            <h2 className="text-xs font-bold text-violet-600 uppercase tracking-widest mb-3 flex items-center gap-1">
-              <Scan size={12} /> AR空間
-            </h2>
-            <div className="card overflow-hidden">
-              <AvatarViewer visemeStateRef={visemeStateRef} />
-            </div>
-          </div>
+    <div className="page-bg min-h-screen py-6 px-4">
+      <div className="max-w-xl mx-auto space-y-4">
+        {/* AR表示エリア */}
+        <div className="card overflow-hidden">
+          <AvatarViewer visemeStateRef={visemeStateRef} />
+        </div>
 
-          {/* 音声チャット */}
-          <div>
-            <h2 className="text-xs font-bold text-pink-500 uppercase tracking-widest mb-3 flex items-center gap-1">
-              <MessageCircle size={12} /> 会話
-            </h2>
-            <div className="card p-6">
-              {arSession && (
-                <VoiceChatInterface
-                  arSessionId={arSession.session_token}
-                  partnerName={partnerName}
-                  partnerVoiceId={partnerVoiceId}
-                  conversationId={conversationId}
-                  onEnd={() => router.push("/matches")}
-                  onVisemeChange={handleVisemeChange}
-                />
-              )}
-            </div>
-          </div>
+        {/* 音声チャット */}
+        <div className="card p-5">
+          {arSession && (
+            <VoiceChatInterface
+              arSessionId={arSession.session_token}
+              partnerName={partnerName}
+              partnerVoiceId={partnerVoiceId}
+              conversationId={conversationId}
+              onEnd={() => router.push("/matches")}
+              onVisemeChange={handleVisemeChange}
+            />
+          )}
         </div>
       </div>
     </div>
