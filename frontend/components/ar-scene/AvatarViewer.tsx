@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -41,9 +41,13 @@ const MORPH_CANDIDATES = [
 // 顎ボーン候補
 const JAW_BONE_CANDIDATES = ["Jaw", "jaw", "mixamorigJaw", "CC_Base_JawRoot"];
 
+// 頭ボーン候補（head bobフォールバック用）
+const HEAD_BONE_CANDIDATES = ["head", "Head", "mixamorigHead"];
+
 type AnimMethod =
   | { type: "morph"; mesh: THREE.SkinnedMesh; index: number }
   | { type: "bone"; bone: THREE.Bone }
+  | { type: "head_bob"; bone: THREE.Bone; restRotX: number }
   | { type: "none" };
 
 function discoverAnimMethod(scene: THREE.Group): AnimMethod {
@@ -53,7 +57,6 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
     if (!(obj instanceof THREE.SkinnedMesh)) return;
     const dict = obj.morphTargetDictionary;
     if (!dict) return;
-    console.log(`[AvatarViewer] Morph targets on "${obj.name}":`, Object.keys(dict));
     if (found) return;
     for (const name of MORPH_CANDIDATES) {
       if (name in dict) {
@@ -66,21 +69,31 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   if (found) return found;
 
   // Tier2: 顎ボーン検索
-  const allBones: string[] = [];
-  let bone: THREE.Bone | null = null;
+  let jawBone: THREE.Bone | null = null;
   scene.traverse((obj) => {
-    if (!(obj instanceof THREE.Bone)) return;
-    allBones.push(obj.name);
-    if (!bone && JAW_BONE_CANDIDATES.includes(obj.name)) {
+    if (jawBone || !(obj instanceof THREE.Bone)) return;
+    if (JAW_BONE_CANDIDATES.includes(obj.name)) {
       console.log(`[AvatarViewer] Using jaw bone: "${obj.name}"`);
-      bone = obj;
+      jawBone = obj;
     }
   });
-  if (bone) return { type: "bone", bone };
+  if (jawBone) return { type: "bone", bone: jawBone };
 
-  // Tier3: フォールバック（全ボーン名をログ）
-  console.warn("[AvatarViewer] No morph target or jaw bone found.");
-  console.warn("[AvatarViewer] All bones:", allBones);
+  // Tier3: 頭ボーンで head bob フォールバック
+  let headBone: THREE.Bone | null = null;
+  scene.traverse((obj) => {
+    if (headBone || !(obj instanceof THREE.Bone)) return;
+    if (HEAD_BONE_CANDIDATES.includes(obj.name)) {
+      console.log(`[AvatarViewer] Using head bob: "${obj.name}"`);
+      headBone = obj;
+    }
+  });
+  if (headBone) {
+    const b = headBone as THREE.Bone;
+    return { type: "head_bob", bone: b, restRotX: b.rotation.x };
+  }
+
+  console.warn("[AvatarViewer] No animation method found");
   return { type: "none" };
 }
 
@@ -98,15 +111,11 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
     animMethodRef.current = discoverAnimMethod(scene);
   }, [scene]);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     const method = animMethodRef.current;
     if (!method || method.type === "none") return;
 
-    const target = isSpeaking
-      ? (VISEME_OPENNESS[currentViseme] ?? 0)
-      : 0;
-
-    // lerp で滑らかに補間
+    const target = isSpeaking ? (VISEME_OPENNESS[currentViseme] ?? 0) : 0;
     currentOpennessRef.current = THREE.MathUtils.lerp(
       currentOpennessRef.current,
       target,
@@ -120,6 +129,10 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
       }
     } else if (method.type === "bone") {
       method.bone.rotation.x = v * 0.35;
+    } else if (method.type === "head_bob") {
+      // 話し中: 頭を小刻みに上下（sine wave bob）
+      const bob = Math.sin(clock.elapsedTime * 10) * v * 0.08;
+      method.bone.rotation.x = method.restRotX + bob;
     }
   });
 
