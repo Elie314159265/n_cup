@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Link2, AlertTriangle, Scan, MessageCircle } from "lucide-react";
 import { VoiceChatInterface } from "@/components/ai/VoiceChatInterface";
@@ -28,12 +28,11 @@ function ARSessionContent() {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [isStarted, setIsStarted] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [currentViseme, setCurrentViseme] = useState("sil");
+  // viseme はRAFループから毎フレーム更新されるためrefで管理（setState不要）
+  const visemeStateRef = useRef({ viseme: "sil", isSpeaking: false });
 
   const handleVisemeChange = useCallback((viseme: string) => {
-    setCurrentViseme(viseme);
-    setIsSpeaking(viseme !== "sil");
+    visemeStateRef.current = { viseme, isSpeaking: viseme !== "sil" };
   }, []);
 
   // 会話データとパートナープロフィールを取得
@@ -175,10 +174,7 @@ function ARSessionContent() {
               <Scan size={12} /> AR空間
             </h2>
             <div className="card overflow-hidden">
-              <AvatarViewer
-                isSpeaking={isSpeaking}
-                currentViseme={currentViseme}
-              />
+              <AvatarViewer visemeStateRef={visemeStateRef} />
             </div>
           </div>
 
