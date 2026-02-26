@@ -165,15 +165,15 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
   const [isARSupported, setIsARSupported] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (typeof navigator !== "undefined" && "xr" in navigator) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as any).xr
-        .isSessionSupported("immersive-ar")
-        .then(setIsARSupported)
-        .catch(() => setIsARSupported(false));
-    } else {
-      setIsARSupported(false);
-    }
+    // 両パスを Promise に統一し、setState を常に非同期コールバック内で呼ぶ
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const promise: Promise<boolean> =
+      typeof navigator !== "undefined" && "xr" in navigator
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? (navigator as any).xr.isSessionSupported("immersive-ar")
+        : Promise.resolve(false);
+
+    promise.then(setIsARSupported).catch(() => setIsARSupported(false));
   }, []);
 
   return (
