@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bomb, Heart, CheckCircle2, Send } from "lucide-react";
+import Link from "next/link";
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import { Explosion } from "@/components/discover/bomb/Explosion";
 import { HeartExplosion } from "@/components/discover/match/Heart";
+import { Bomb, Heart, CheckCircle2, Send, Search } from "lucide-react";
+import { ExplosionOverlay } from "@/components/discover/bomb/Explosion";
 import {
   MatchingFilter,
   FilterOptions,
@@ -151,11 +153,11 @@ export default function DiscoverPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* 爆発エフェクト（左スワイプ時） */}
         {showExplosion && (
-          <div className="fixed inset-0 z-50 pointer-events-none">
-            <Canvas>
-              <Explosion onComplete={handleExplosionComplete} />
-            </Canvas>
-          </div>
+          <ExplosionOverlay
+            partnerName={profiles[currentIndex]?.username}
+            onComplete={handleExplosionComplete}
+            zIndex={50}
+          />
         )}
         {/* ハートエフェクト（右スワイプ時） */}
         {showHeart && (
@@ -170,9 +172,19 @@ export default function DiscoverPage() {
           <h1 className="text-3xl font-black gradient-text mb-2">
             気になる相手を探す
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-sm mb-4">
             スワイプしてあなたの理想の人を見つけましょう
           </p>
+          <Link
+            href="/ar-discover"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90"
+            style={{
+              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+              boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
+            }}
+          >
+            📷 ARで見る
+          </Link>
         </div>
 
         {/* フィルター */}
