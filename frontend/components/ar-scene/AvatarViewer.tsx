@@ -80,12 +80,25 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   });
   if (jawBone) return { type: "bone", bone: jawBone };
 
-  // Tier3: 頭ボーンで head bob フォールバック
+  // Tier3: 全ボーンのワールド座標をログして位置を確認 → head bob フォールバック
+  const bonePositions: { name: string; pos: THREE.Vector3 }[] = [];
+  scene.traverse((obj) => {
+    if (!(obj instanceof THREE.Bone)) return;
+    const pos = new THREE.Vector3();
+    obj.getWorldPosition(pos);
+    bonePositions.push({ name: obj.name, pos: pos.clone() });
+  });
+  // X が最大（モデル正面方向）のボーンを顔候補とする
+  const sorted = [...bonePositions].sort((a, b) => b.pos.x - a.pos.x);
+  console.log("[AvatarViewer] Bone world positions (sorted by X desc):", sorted.map(b => `${b.name}(${b.pos.x.toFixed(2)},${b.pos.y.toFixed(2)},${b.pos.z.toFixed(2)})`));
+
   let headBone: THREE.Bone | null = null;
   scene.traverse((obj) => {
     if (headBone || !(obj instanceof THREE.Bone)) return;
     if (HEAD_BONE_CANDIDATES.includes(obj.name)) {
-      console.log(`[AvatarViewer] Using head bob: "${obj.name}"`);
+      const pos = new THREE.Vector3();
+      obj.getWorldPosition(pos);
+      console.log(`[AvatarViewer] head bob bone: "${obj.name}" world pos: x=${pos.x.toFixed(2)} y=${pos.y.toFixed(2)} z=${pos.z.toFixed(2)}`);
       headBone = obj;
     }
   });
@@ -105,7 +118,7 @@ interface AvatarModelProps {
 }
 
 function AvatarModel({ visemeStateRef }: AvatarModelProps) {
-  const { scene: gltfScene } = useGLTF("/models/nimo_anime.glb");
+  const { scene: gltfScene } = useGLTF("/models/female.glb");
   // SkeletonUtils.clone: SkinnedMesh のボーンバインディングを正しく再構築する
   // scene.clone(true) だと SkinnedMesh が元のスケルトンを参照したまま骨回転が無視される
   const scene = useMemo(() => SkeletonUtils.clone(gltfScene) as THREE.Group, [gltfScene]);
@@ -186,4 +199,4 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
   );
 };
 
-useGLTF.preload("/models/nimo_anime.glb");
+useGLTF.preload("/models/female.glb");
