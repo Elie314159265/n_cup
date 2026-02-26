@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
@@ -12,24 +13,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+    <div className="page-bg min-h-screen flex items-center justify-center px-4">
+      <div className="card p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent mb-4">
+          <div className="icon-box mx-auto mb-4">
+            <LogIn size={20} />
+          </div>
+          <h1 className="text-2xl font-black gradient-text mb-1">
             Link Persona
           </h1>
-          <p className="text-lg font-semibold text-gray-700">ログイン</p>
+          <p className="text-sm text-gray-500">ログイン</p>
         </div>
 
         <LoginForm onSuccess={handleSuccess} />
 
-        <div className="mt-8 border-t border-gray-200 pt-6">
-          <p className="text-center text-gray-600 mb-4">
+        <div className="mt-6 pt-5 border-t border-gray-100">
+          <p className="text-center text-gray-400 text-xs mb-3">
             アカウントをお持ちでないですか？
           </p>
           <Link href="/auth/signup">
-            <button className="w-full px-4 py-2 bg-gray-200 text-gray-900 font-medium rounded-lg hover:bg-gray-300 transition-colors">
-              新規登録
+            <button
+              className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-150 text-violet-600 hover:bg-violet-50"
+              style={{ border: "1px solid #e9d5ff" }}
+            >
+              新規登録はこちら
             </button>
           </Link>
         </div>
