@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useMemo, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
 import { createXRStore, XR, useXRHitTest } from "@react-three/xr";
 import * as THREE from "three";
@@ -124,25 +124,40 @@ function AvatarModel({ visemeStateRef }: { visemeStateRef: React.MutableRefObjec
   return <primitive object={scene} />;
 }
 
-// AR空間でのアバター（床面ヒットテストで位置追従）
+// AR空間でのアバター（カメラ前方1.5mに配置）
 function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefObject<VisemeState> }) {
   const groupRef = useRef<THREE.Group>(null);
-  const matrixHelper = useMemo(() => new THREE.Matrix4(), []);
+  const floorYRef = useRef(0);
+  const { camera } = useThree();
+  const tmpDirRef = useRef(new THREE.Vector3());
+  const matrixHelperRef = useRef(new THREE.Matrix4());
 
-  // 床面ヒットテストでアバターをリアルタイム追従
+  // 床面ヒットテストで床のY座標のみ記録
   useXRHitTest(
     (results: XRHitTestResult[], getWorldMatrix: (target: THREE.Matrix4, result: XRHitTestResult) => void) => {
-      if (results.length === 0 || !groupRef.current) return;
-      getWorldMatrix(matrixHelper, results[0]);
-      groupRef.current.position.setFromMatrixPosition(matrixHelper);
-      // Y軸回転のみ抽出（地面の法線に合わせて回転させない）
-      const q = new THREE.Quaternion().setFromRotationMatrix(matrixHelper);
-      const euler = new THREE.Euler().setFromQuaternion(q);
-      groupRef.current.rotation.y = euler.y;
+      if (results.length === 0) return;
+      getWorldMatrix(matrixHelperRef.current, results[0]);
+      floorYRef.current = new THREE.Vector3().setFromMatrixPosition(matrixHelperRef.current).y;
     },
     "viewer",
     "plane",
   );
+
+  // カメラ前方1.5mにアバターを配置し、ユーザーに向ける
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const dir = tmpDirRef.current;
+    camera.getWorldDirection(dir);
+    dir.y = 0;
+    if (dir.lengthSq() < 0.001) return;
+    dir.normalize();
+    groupRef.current.position.set(
+      camera.position.x + dir.x * 1.5,
+      floorYRef.current,
+      camera.position.z + dir.z * 1.5,
+    );
+    groupRef.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
+  });
 
   return (
     <>
@@ -166,7 +181,6 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
 
   useEffect(() => {
     // 両パスを Promise に統一し、setState を常に非同期コールバック内で呼ぶ
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const promise: Promise<boolean> =
       typeof navigator !== "undefined" && "xr" in navigator
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
