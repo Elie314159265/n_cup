@@ -137,16 +137,15 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
         method.bone.rotation.x = v * 0.35;
       }
     } else if (method.type === "head_bob") {
-      // isSpeaking が高速トグルしてもエネルギーがゆっくり変化するので滑らか
+      // isSpeaking が true になったら素早く立ち上がり、false でゆっくり収束
       const energyTarget = isSpeaking ? 1 : 0;
       speakingEnergyRef.current = THREE.MathUtils.lerp(
         speakingEnergyRef.current,
         energyTarget,
-        isSpeaking ? 0.04 : 0.02, // フェードイン速め・フェードアウト遅め
+        isSpeaking ? 0.15 : 0.03,
       );
       const energy = speakingEnergyRef.current;
-      // 低周波サイン波でゆっくりと揺れる
-      const bob = Math.sin(clock.elapsedTime * 3) * energy * 0.12;
+      const bob = Math.sin(clock.elapsedTime * 4) * energy * 0.25;
       method.bone.rotation.x = method.restRotX + bob;
     }
   });
