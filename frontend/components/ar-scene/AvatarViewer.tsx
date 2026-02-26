@@ -104,10 +104,12 @@ interface AvatarModelProps {
 
 function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
   const { scene: gltfScene } = useGLTF("/models/nimo_anime.glb");
-  // シーンをクローンして共有参照の競合を防ぐ
   const scene = useMemo(() => gltfScene.clone(true), [gltfScene]);
   const animMethodRef = useRef<AnimMethod | null>(null);
+  // morph/bone 用: viseme openness をゆっくり補間
   const currentOpennessRef = useRef(0);
+  // head_bob 用: 発話中 → ゆっくり 1 に近づき、無音 → ゆっくり 0 に戻る
+  const speakingEnergyRef = useRef(0);
 
   useEffect(() => {
     animMethodRef.current = discoverAnimMethod(scene);
@@ -117,22 +119,31 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
     const method = animMethodRef.current;
     if (!method || method.type === "none") return;
 
-    const target = isSpeaking ? (VISEME_OPENNESS[currentViseme] ?? 0) : 0;
-    currentOpennessRef.current = THREE.MathUtils.lerp(
-      currentOpennessRef.current,
-      target,
-      0.3,
-    );
-    const v = currentOpennessRef.current;
-
-    if (method.type === "morph") {
-      if (method.mesh.morphTargetInfluences) {
+    if (method.type === "morph" || method.type === "bone") {
+      // viseme ごとに openness を補間（lip sync）
+      const target = isSpeaking ? (VISEME_OPENNESS[currentViseme] ?? 0) : 0;
+      currentOpennessRef.current = THREE.MathUtils.lerp(
+        currentOpennessRef.current,
+        target,
+        0.2,
+      );
+      const v = currentOpennessRef.current;
+      if (method.type === "morph" && method.mesh.morphTargetInfluences) {
         method.mesh.morphTargetInfluences[method.index] = v;
+      } else if (method.type === "bone") {
+        method.bone.rotation.x = v * 0.35;
       }
-    } else if (method.type === "bone") {
-      method.bone.rotation.x = v * 0.35;
     } else if (method.type === "head_bob") {
-      const bob = Math.sin(clock.elapsedTime * 10) * v * 0.08;
+      // isSpeaking が高速トグルしてもエネルギーがゆっくり変化するので滑らか
+      const energyTarget = isSpeaking ? 1 : 0;
+      speakingEnergyRef.current = THREE.MathUtils.lerp(
+        speakingEnergyRef.current,
+        energyTarget,
+        isSpeaking ? 0.04 : 0.02, // フェードイン速め・フェードアウト遅め
+      );
+      const energy = speakingEnergyRef.current;
+      // 低周波サイン波でゆっくりと揺れる
+      const bob = Math.sin(clock.elapsedTime * 3) * energy * 0.12;
       method.bone.rotation.x = method.restRotX + bob;
     }
   });
