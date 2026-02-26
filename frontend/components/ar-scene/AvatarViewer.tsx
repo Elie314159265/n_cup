@@ -1,48 +1,29 @@
 "use client";
 
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
+import { createXRStore, XR, useXRHitTest } from "@react-three/xr";
 import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 
+const MODEL_PATH = "/models/Meshy_AI_Animation_Agree_Gesture_withSkin.glb";
+
+// XRストア（ARセッション管理）
+const xrStore = createXRStore({ offerSession: "immersive-ar" });
+
 // Polly viseme → 口の開き度マッピング
 const VISEME_OPENNESS: Record<string, number> = {
-  sil: 0.0,
-  p: 0.05,
-  f: 0.1,
-  T: 0.15,
-  t: 0.2,
-  s: 0.2,
-  S: 0.25,
-  k: 0.3,
-  u: 0.3,
-  r: 0.35,
-  i: 0.4,
-  "@": 0.45,
-  e: 0.55,
-  E: 0.6,
-  o: 0.65,
-  O: 0.7,
-  a: 0.8,
+  sil: 0.0, p: 0.05, f: 0.1, T: 0.15, t: 0.2, s: 0.2,
+  S: 0.25, k: 0.3, u: 0.3, r: 0.35, i: 0.4, "@": 0.45,
+  e: 0.55, E: 0.6, o: 0.65, O: 0.7, a: 0.8,
 };
 
-// モーフターゲット候補（優先順）
 const MORPH_CANDIDATES = [
-  "jawOpen",
-  "mouthOpen",
-  "viseme_aa",
-  "viseme_O",
-  "Fcl_MTH_A",
-  "mouth_open",
-  "A",
-  "aa",
+  "jawOpen", "mouthOpen", "viseme_aa", "viseme_O",
+  "Fcl_MTH_A", "mouth_open", "A", "aa",
 ];
-
-// 顎ボーン候補
 const JAW_BONE_CANDIDATES = ["Jaw", "jaw", "mixamorigJaw", "CC_Base_JawRoot"];
-
-// 頭ボーン候補（head bobフォールバック用）
 const HEAD_BONE_CANDIDATES = ["head", "Head", "mixamorigHead"];
 
 type AnimMethod =
@@ -52,13 +33,11 @@ type AnimMethod =
   | { type: "none" };
 
 function discoverAnimMethod(scene: THREE.Group): AnimMethod {
-  // Tier1: モーフターゲット検索
   let found: AnimMethod | null = null;
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.SkinnedMesh)) return;
     const dict = obj.morphTargetDictionary;
-    if (!dict) return;
-    if (found) return;
+    if (!dict || found) return;
     for (const name of MORPH_CANDIDATES) {
       if (name in dict) {
         console.log(`[AvatarViewer] Using morph target: "${name}"`);
@@ -69,7 +48,6 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   });
   if (found) return found;
 
-  // Tier2: 顎ボーン検索
   let jawBone: THREE.Bone | null = null;
   scene.traverse((obj) => {
     if (jawBone || !(obj instanceof THREE.Bone)) return;
@@ -80,7 +58,6 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   });
   if (jawBone) return { type: "bone", bone: jawBone };
 
-  // Tier3: 全ボーンのワールド座標をログして位置を確認 → head bob フォールバック
   const bonePositions: { name: string; pos: THREE.Vector3 }[] = [];
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.Bone)) return;
@@ -88,19 +65,13 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
     obj.getWorldPosition(pos);
     bonePositions.push({ name: obj.name, pos: pos.clone() });
   });
-  // X が最大（モデル正面方向）のボーンを顔候補とする
-  const sorted = [...bonePositions].sort((a, b) => b.pos.x - a.pos.x);
-  console.log("[AvatarViewer] Bone world positions (sorted by X desc):", sorted.map(b => `${b.name}(${b.pos.x.toFixed(2)},${b.pos.y.toFixed(2)},${b.pos.z.toFixed(2)})`));
+  const sorted = [...bonePositions].sort((a, b) => b.pos.y - a.pos.y);
+  console.log("[AvatarViewer] Bones (Y desc):", sorted.map(b => `${b.name}(${b.pos.y.toFixed(2)})`));
 
   let headBone: THREE.Bone | null = null;
   scene.traverse((obj) => {
     if (headBone || !(obj instanceof THREE.Bone)) return;
-    if (HEAD_BONE_CANDIDATES.includes(obj.name)) {
-      const pos = new THREE.Vector3();
-      obj.getWorldPosition(pos);
-      console.log(`[AvatarViewer] head bob bone: "${obj.name}" world pos: x=${pos.x.toFixed(2)} y=${pos.y.toFixed(2)} z=${pos.z.toFixed(2)}`);
-      headBone = obj;
-    }
+    if (HEAD_BONE_CANDIDATES.includes(obj.name)) headBone = obj;
   });
   if (headBone) {
     const b = headBone as THREE.Bone;
@@ -113,19 +84,12 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
 
 type VisemeState = { viseme: string; isSpeaking: boolean };
 
-interface AvatarModelProps {
-  visemeStateRef: React.MutableRefObject<VisemeState>;
-}
-
-function AvatarModel({ visemeStateRef }: AvatarModelProps) {
-  const { scene: gltfScene } = useGLTF("/models/Meshy_AI_Animation_Agree_Gesture_withSkin.glb");
-  // SkeletonUtils.clone: SkinnedMesh のボーンバインディングを正しく再構築する
-  // scene.clone(true) だと SkinnedMesh が元のスケルトンを参照したまま骨回転が無視される
+// アバターモデル本体（lip sync アニメーション付き）
+function AvatarModel({ visemeStateRef }: { visemeStateRef: React.MutableRefObject<VisemeState> }) {
+  const { scene: gltfScene } = useGLTF(MODEL_PATH);
   const scene = useMemo(() => SkeletonUtils.clone(gltfScene) as THREE.Group, [gltfScene]);
   const animMethodRef = useRef<AnimMethod | null>(null);
-  // morph/bone 用: viseme openness をゆっくり補間
   const currentOpennessRef = useRef(0);
-  // head_bob 用: 発話中 → ゆっくり 1 に近づき、無音 → ゆっくり 0 に戻る
   const speakingEnergyRef = useRef(0);
 
   useEffect(() => {
@@ -135,17 +99,11 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
   useFrame(({ clock }) => {
     const method = animMethodRef.current;
     if (!method || method.type === "none") return;
-
     const { viseme: currentViseme, isSpeaking } = visemeStateRef.current;
 
     if (method.type === "morph" || method.type === "bone") {
-      // viseme ごとに openness を補間（lip sync）
       const target = isSpeaking ? (VISEME_OPENNESS[currentViseme] ?? 0) : 0;
-      currentOpennessRef.current = THREE.MathUtils.lerp(
-        currentOpennessRef.current,
-        target,
-        0.2,
-      );
+      currentOpennessRef.current = THREE.MathUtils.lerp(currentOpennessRef.current, target, 0.2);
       const v = currentOpennessRef.current;
       if (method.type === "morph" && method.mesh.morphTargetInfluences) {
         method.mesh.morphTargetInfluences[method.index] = v;
@@ -153,18 +111,12 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
         method.bone.rotation.x = v * 0.35;
       }
     } else if (method.type === "head_bob") {
-      // isSpeaking が true になったら素早く立ち上がり、false でゆっくり収束
-      const energyTarget = isSpeaking ? 1 : 0;
       speakingEnergyRef.current = THREE.MathUtils.lerp(
-        speakingEnergyRef.current,
-        energyTarget,
-        isSpeaking ? 0.15 : 0.03,
+        speakingEnergyRef.current, isSpeaking ? 1 : 0, isSpeaking ? 0.15 : 0.03,
       );
       const energy = speakingEnergyRef.current;
       const t = clock.elapsedTime;
-      // X軸: 上下に大きく揺れる（約±34°）
       method.bone.rotation.x = method.restRotX + Math.sin(t * 4) * energy * 0.6;
-      // Z軸: 左右にも揺れて立体感を出す（約±17°）
       method.bone.rotation.z = Math.sin(t * 4 + Math.PI / 3) * energy * 0.3;
     }
   });
@@ -172,7 +124,37 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
   return <primitive object={scene} />;
 }
 
-// デフォルト用の静的ref（AvatarCustomizer等で props 省略時に使用）
+// AR空間でのアバター（床面ヒットテストで位置追従）
+function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefObject<VisemeState> }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const matrixHelper = useMemo(() => new THREE.Matrix4(), []);
+
+  // 床面ヒットテストでアバターをリアルタイム追従
+  useXRHitTest(
+    (results: XRHitTestResult[], getWorldMatrix: (target: THREE.Matrix4, result: XRHitTestResult) => void) => {
+      if (results.length === 0 || !groupRef.current) return;
+      getWorldMatrix(matrixHelper, results[0]);
+      groupRef.current.position.setFromMatrixPosition(matrixHelper);
+      // Y軸回転のみ抽出（地面の法線に合わせて回転させない）
+      const q = new THREE.Quaternion().setFromRotationMatrix(matrixHelper);
+      const euler = new THREE.Euler().setFromQuaternion(q);
+      groupRef.current.rotation.y = euler.y;
+    },
+    "viewer",
+    "plane",
+  );
+
+  return (
+    <>
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[2, 4, 2]} intensity={1.5} />
+      <group ref={groupRef}>
+        <AvatarModel visemeStateRef={visemeStateRef} />
+      </group>
+    </>
+  );
+}
+
 const DEFAULT_VISEME_REF = { current: { viseme: "sil", isSpeaking: false } };
 
 interface AvatarViewerProps {
@@ -180,23 +162,53 @@ interface AvatarViewerProps {
 }
 
 export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarViewerProps) => {
+  const [isARSupported, setIsARSupported] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "xr" in navigator) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (navigator as any).xr
+        .isSessionSupported("immersive-ar")
+        .then(setIsARSupported)
+        .catch(() => setIsARSupported(false));
+    } else {
+      setIsARSupported(false);
+    }
+  }, []);
+
   return (
-    <div className="bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg overflow-hidden shadow-lg h-96">
+    <div className="relative bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg overflow-hidden shadow-lg h-96">
       <Canvas
         camera={{ position: [0, 1.5, 4], fov: 45 }}
         gl={{ antialias: true }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[2, 4, 2]} intensity={1.2} />
-        <Bounds fit clip observe>
-          <Center>
-            <AvatarModel visemeStateRef={visemeStateRef} />
-          </Center>
-        </Bounds>
-        <OrbitControls enablePan={false} target={[0, 1, 0]} />
+        <XR store={xrStore}>
+          {/* 通常ビュー */}
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[2, 4, 2]} intensity={1.2} />
+          <Bounds fit clip observe>
+            <Center>
+              <AvatarModel visemeStateRef={visemeStateRef} />
+            </Center>
+          </Bounds>
+          <OrbitControls enablePan={false} target={[0, 1, 0]} />
+
+          {/* ARビュー（XRセッション中のみ有効） */}
+          <ARSceneContent visemeStateRef={visemeStateRef} />
+        </XR>
       </Canvas>
+
+      {/* ARボタン：WebXR対応デバイスのみ表示 */}
+      {isARSupported && (
+        <button
+          onClick={() => xrStore.enterAR()}
+          className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-purple-700 font-bold text-sm px-4 py-2 rounded-full shadow-lg border border-purple-200 flex items-center gap-2"
+        >
+          📷 ARで見る
+        </button>
+      )}
     </div>
   );
 };
 
-useGLTF.preload("/models/Meshy_AI_Animation_Agree_Gesture_withSkin.glb");
+useGLTF.preload(MODEL_PATH);
