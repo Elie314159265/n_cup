@@ -40,7 +40,7 @@ export type TranscriptEntry = {
 const _hitMatrix = new THREE.Matrix4();
 
 // ─── 音声会話フック（実API版） ────────────────────────────────────────────
-function useVoiceChat(arSessionId: number | null) {
+function useVoiceChat(arSessionId: string | null) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -517,8 +517,8 @@ function ArPageInner() {
 
   const [selectedModel, setSelectedModel] = useState<ModelId>("nimo_anime");
   const [arError, setArError] = useState<string | null>(null);
-  const [arSessionId, setArSessionId] = useState<number | null>(
-    arSessionIdParam ? Number(arSessionIdParam) : null,
+  const [arSessionId, setArSessionId] = useState<string | null>(
+    arSessionIdParam ?? null,
   );
   const [sessionError, setSessionError] = useState<string | null>(() =>
     !arSessionIdParam && !conversationId
@@ -536,7 +536,7 @@ function ArPageInner() {
       conversation_id: Number(conversationId),
       environment_type: "ar",
     })
-      .then((res) => setArSessionId(res.ar_session.id))
+      .then((res) => setArSessionId(res.ar_session.session_token))
       .catch(() =>
         setSessionError(
           "ARセッションの作成に失敗しました。再読み込みしてください。",

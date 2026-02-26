@@ -1,7 +1,7 @@
 import type { AiMessage } from "./ar-session";
 
 export type AiChatRequest = {
-  ar_session_id: number;
+  ar_session_id: string; // ARセッションの session_token (例: "sess_abc123")
   message: string;
   context?: {
     target_profile_id?: number;
@@ -26,9 +26,16 @@ export type AiSpeechRequest = {
   language_code?: string;
 };
 
+// Polly speech marks から取得する口形イベント
+export type Viseme = {
+  time: number;  // 音声開始からのミリ秒
+  value: string; // "sil" | "a" | "e" | "i" | "o" | "u" | etc.
+};
+
 export type AiSpeechResponse = {
   audio_url: string;
   duration: number;
+  visemes: Viseme[];
 };
 
 export type AiTranscribeResponse = {

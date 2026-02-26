@@ -42,7 +42,21 @@ export async function updateUser(
  * GET /api/v1/profiles/:id
  */
 export async function getProfile(id: number): Promise<Profile> {
-  return apiClient<Profile>(`/api/v1/profiles/${id}`);
+  const data = await apiClient<{ profile: Profile }>(`/api/v1/profiles/${id}`);
+  return data.profile;
+}
+
+/**
+ * プロフィール新規作成
+ * POST /api/v1/profiles
+ */
+export async function createProfile(
+  body: UpdateProfileRequest,
+): Promise<{ profile: Profile }> {
+  return apiClient<{ profile: Profile }>("/api/v1/profiles", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 /**
@@ -53,10 +67,11 @@ export async function updateProfile(
   id: number,
   body: UpdateProfileRequest,
 ): Promise<Profile> {
-  return apiClient<Profile>(`/api/v1/profiles/${id}`, {
+  const data = await apiClient<{ profile: Profile }>(`/api/v1/profiles/${id}`, {
     method: "PATCH",
     body: JSON.stringify(body),
   });
+  return data.profile;
 }
 
 /**

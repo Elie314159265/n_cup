@@ -15,6 +15,7 @@ export type SignUpRequest = {
 
 export type SignUpResponse = {
   user: AuthUser;
+  profile_id: number;
   id_token: string;
   access_token: string;
   refresh_token: string;
@@ -27,6 +28,7 @@ export type SignInRequest = {
 
 export type SignInResponse = {
   user: AuthUser;
+  profile_id: number | null;
   id_token: string;
   access_token: string;
   refresh_token: string;

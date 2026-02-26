@@ -15,6 +15,7 @@ export const Button = ({
   loading = false,
   children,
   disabled,
+  className,
   ...props
 }: ButtonProps) => {
   const baseStyles =
@@ -36,7 +37,7 @@ export const Button = ({
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]}`}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className || ""}`}
       disabled={disabled || loading}
       {...props}
     >

@@ -1,8 +1,8 @@
 module Ai
   class BedrockService
     def initialize
-      @client = Aws::BedrockRuntime::Client.new(region: ENV['AWS_REGION'] || 'ap-northeast-1')
-      @model_id = 'anthropic.claude-3-5-sonnet-20241022-v2:0'
+      @client = Aws::BedrockRuntime::Client.new(region: ENV["AWS_REGION"] || "ap-northeast-1")
+      @model_id = "apac.amazon.nova-micro-v1:0"
     end
 
     # Chat with AI that impersonates a matched partner
@@ -10,8 +10,8 @@ module Ai
     def chat(message, context = {})
       response = @client.invoke_model({
         model_id: @model_id,
-        content_type: 'application/json',
-        accept: 'application/json',
+        content_type: "application/json",
+        accept: "application/json",
         body: build_request_body(message, context).to_json
       })
 
@@ -25,31 +25,35 @@ module Ai
       conversation_history = context[:conversation_history] || []
 
       system_prompt = build_system_prompt(partner_profile)
-      messages = conversation_history + [
-        {
-          role: 'user',
-          content: message
-        }
-      ]
+
+      # Nova形式: content は [{text: "..."}] の配列
+      messages = conversation_history.map do |h|
+        role    = h[:role]    || h["role"]
+        content = h[:content] || h["content"]
+        { role: role, content: [ { text: content.to_s } ] }
+      end
+      messages << { role: "user", content: [ { text: message } ] }
 
       {
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: 1024,
-        system: system_prompt,
-        messages: messages
+        messages: messages,
+        system: [ { text: system_prompt } ],
+        inferenceConfig: {
+          maxTokens: 1024,
+          temperature: 0.7
+        }
       }
     end
 
     def build_system_prompt(partner_profile)
       return default_prompt unless partner_profile
 
-      name = partner_profile.display_name || 'ユーザー'
-      age = partner_profile.age
-      gender = partner_profile.gender
-      personality = partner_profile.personality || '親しみやすい'
-      interests = partner_profile.interests || []
-      interests_text = interests.any? ? interests.join('、') : '様々なこと'
-      bio = partner_profile.bio || ''
+      name         = partner_profile.display_name || "ユーザー"
+      age          = partner_profile.age
+      gender       = partner_profile.gender
+      personality  = partner_profile.personality || "親しみやすい"
+      interests    = partner_profile.interests || []
+      interests_text = interests.any? ? interests.join("、") : "様々なこと"
+      bio          = partner_profile.bio || ""
 
       """
       あなたは「#{name}」という人物になりきってください。
@@ -82,9 +86,9 @@ module Ai
     def parse_response(body)
       data = JSON.parse(body)
       {
-        text: data.dig('content', 0, 'text'),
-        stop_reason: data['stop_reason'],
-        usage: data['usage']
+        text: data.dig("output", "message", "content", 0, "text"),
+        stop_reason: data["stopReason"],
+        usage: data["usage"]
       }
     rescue JSON::ParserError => e
       Rails.logger.error("Bedrock response parse error: #{e.message}")

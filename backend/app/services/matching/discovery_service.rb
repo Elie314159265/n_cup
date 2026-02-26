@@ -17,9 +17,9 @@ module Matching
       query = User.joins(:profile)
                   .where.not(id: excluded_user_ids)
                   .where.not(id: @user.id)
-                  .where('profiles.age BETWEEN ? AND ?', age_min, age_max)
+                  .where("profiles.age BETWEEN ? AND ?", age_min, age_max)
 
-      query = query.where('profiles.gender = ?', gender) if gender.present?
+      query = query.where("profiles.gender = ?", gender) if gender.present?
 
       candidates = query.limit(limit * 2).to_a
 
@@ -36,14 +36,14 @@ module Matching
 
     def excluded_users
       liked_ids = @user.sent_likes.pluck(:to_user_id)
-      matched_ids = Match.where('user_id_1 = ? OR user_id_2 = ?', @user.id, @user.id)
-                         .where(status: 'matched')
+      matched_ids = Match.where("user_id_1 = ? OR user_id_2 = ?", @user.id, @user.id)
+                         .where(status: "matched")
                          .pluck(:user_id_1, :user_id_2)
                          .flatten
                          .uniq
                          .reject { |id| id == @user.id }
 
-      (liked_ids + matched_ids + [@user.id]).uniq
+      (liked_ids + matched_ids + [ @user.id ]).uniq
     end
   end
 end

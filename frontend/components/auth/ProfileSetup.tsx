@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/common/Button";
-import { updateProfile } from "@/actions/users";
+import { createProfile, updateProfile } from "@/actions/users";
 import type { Gender } from "@/types/user";
 
 interface ProfileSetupProps {
@@ -11,6 +11,8 @@ interface ProfileSetupProps {
 
 export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
   const [formData, setFormData] = useState({
+    displayName: "",
+    location: "日本",
     age: 20,
     gender: "female",
     bio: "",
@@ -20,6 +22,13 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    if (username) {
+      setFormData((prev) => ({ ...prev, displayName: username }));
+    }
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -36,27 +45,29 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
     setError("");
 
     try {
-      const userId =
+      const profileIdStr =
         typeof window !== "undefined"
-          ? Number(localStorage.getItem("user_id"))
+          ? localStorage.getItem("profile_id")
           : null;
-      const username =
-        typeof window !== "undefined"
-          ? (localStorage.getItem("username") ?? "")
-          : "";
 
-      if (userId) {
-        await updateProfile(userId, {
-          display_name: username,
-          bio: formData.bio,
-          age: Number(formData.age),
-          gender: formData.gender as Gender,
-          personality: formData.mbti,
-          interests: formData.interests
-            ? formData.interests.split(",").map((s) => s.trim())
-            : [],
-          preferences: { occupation: formData.occupation },
-        });
+      const body = {
+        display_name: formData.displayName,
+        location: formData.location,
+        bio: formData.bio,
+        age: Number(formData.age),
+        gender: formData.gender as Gender,
+        personality: formData.mbti,
+        interests: formData.interests
+          ? formData.interests.split(",").map((s) => s.trim())
+          : [],
+        preferences: { occupation: formData.occupation },
+      };
+
+      if (profileIdStr) {
+        await updateProfile(Number(profileIdStr), body);
+      } else {
+        const result = await createProfile(body);
+        localStorage.setItem("profile_id", String(result.profile.id));
       }
       onSuccess?.();
     } catch (err) {
@@ -67,7 +78,41 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          名前（ニックネーム可）
+        </label>
+        <input
+          type="text"
+          name="displayName"
+          value={formData.displayName}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          所在地
+        </label>
+        <select
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+        >
+          <option value="日本">日本</option>
+          <option value="アメリカ">アメリカ</option>
+          <option value="イギリス">イギリス</option>
+          <option value="カナダ">カナダ</option>
+          <option value="オーストラリア">オーストラリア</option>
+          <option value="韓国">韓国</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           年齢
@@ -172,7 +217,11 @@ export const ProfileSetup = ({ onSuccess }: ProfileSetupProps) => {
 
       {error && <div className="text-red-500 text-sm">{error}</div>}
 
-      <Button type="submit" loading={loading} className="w-full">
+      <Button
+        type="submit"
+        loading={loading}
+        className="w-full flex justify-center"
+      >
         プロフィール作成
       </Button>
     </form>

@@ -11,7 +11,7 @@ class CreateMatches < ActiveRecord::Migration[8.1]
 
     add_foreign_key :matches, :users, column: :user_id_1
     add_foreign_key :matches, :users, column: :user_id_2
-    add_index :matches, [:user_id_1, :user_id_2], unique: true
+    add_index :matches, [ :user_id_1, :user_id_2 ], unique: true
     add_index :matches, :status
   end
 end

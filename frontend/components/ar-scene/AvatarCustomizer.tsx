@@ -74,7 +74,7 @@ export const AvatarCustomizer = ({ onSave }: AvatarCustomizerProps) => {
 
   return (
     <div className="space-y-6">
-      <AvatarViewer avatarData={avatar} />
+      <AvatarViewer />
 
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <div>

@@ -22,13 +22,19 @@ export type Like = {
   is_matched: boolean;
 };
 
+export type MatchPartner = {
+  id: number;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  age: number | null;
+  gender: string | null;
+  location: string | null;
+};
+
 export type Match = {
   id: number;
-  user_id_1: number;
-  user_id_2: number;
-  status: "pending" | "matched" | "rejected";
+  compatibility_score: number | null;
   matched_at: string | null;
-  created_at: string;
-  updated_at: string;
-  matched_user: DiscoverUser;
+  partner: MatchPartner;
 };

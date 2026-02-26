@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { Loading } from "@/components/common/Loading";
@@ -84,7 +85,13 @@ export const ChatWindow = ({ conversationId }: ChatWindowProps) => {
           </h3>
           <p className="text-xs text-gray-500">オンライン</p>
         </div>
-        <button className="text-2xl">⋯</button>
+        <Link
+          href={`/ar-session?conversation_id=${conversationId}`}
+          className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity whitespace-nowrap"
+        >
+          🥽 ARチャット
+        </Link>
+        <button className="text-2xl ml-1">⋯</button>
       </div>
 
       {/* メッセージリスト */}
