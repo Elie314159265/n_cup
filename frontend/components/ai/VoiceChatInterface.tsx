@@ -91,14 +91,6 @@ export const VoiceChatInterface = ({
     return () => stopVisemeLoop();
   }, [stopVisemeLoop]);
 
-  // autoStart: idle になるたびに自動でリスニング開始（初回は800ms、以降は1500ms待機）
-  useEffect(() => {
-    if (!autoStart || step !== "idle" || isEnding) return;
-    const delay = history.length === 0 ? 800 : 1500;
-    const timer = setTimeout(startListening, delay);
-    return () => clearTimeout(timer);
-  }, [autoStart, step, isEnding, history.length, startListening]);
-
   const processAiResponse = useCallback(
     async (userText: string) => {
       setStep("thinking");
@@ -213,6 +205,14 @@ export const VoiceChatInterface = ({
     setStep("listening");
     setError("");
   }, [processAiResponse]);
+
+  // autoStart: idle になるたびに自動でリスニング開始（初回は800ms、以降は1500ms待機）
+  useEffect(() => {
+    if (!autoStart || step !== "idle" || isEnding) return;
+    const delay = history.length === 0 ? 800 : 1500;
+    const timer = setTimeout(startListening, delay);
+    return () => clearTimeout(timer);
+  }, [autoStart, step, isEnding, history.length, startListening]);
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
