@@ -5,12 +5,18 @@ module Ai
       @s3_service = Storage::S3Service.new
     end
 
+    # neural engineに対応している日本語ボイス
+    NEURAL_SUPPORTED_VOICES = %w[Takumi].freeze
+
     def synthesize_speech(text, voice_id: "Mizuki", engine: "neural")
+      # Mizukiはstandardのみ対応。Takumiはneural対応
+      actual_engine = NEURAL_SUPPORTED_VOICES.include?(voice_id) ? engine : "standard"
+
       response = @client.synthesize_speech({
         text: text,
         voice_id: voice_id,
         output_format: "mp3",
-        engine: engine,
+        engine: actual_engine,
         language_code: "ja-JP"
       })
 
