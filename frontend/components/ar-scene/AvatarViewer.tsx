@@ -129,15 +129,15 @@ function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefOb
   const groupRef = useRef<THREE.Group>(null);
   const floorYRef = useRef(0);
   const { camera } = useThree();
-  const tmpDir = useMemo(() => new THREE.Vector3(), []);
-  const matrixHelper = useMemo(() => new THREE.Matrix4(), []);
+  const tmpDirRef = useRef(new THREE.Vector3());
+  const matrixHelperRef = useRef(new THREE.Matrix4());
 
   // 床面ヒットテストで床のY座標のみ記録
   useXRHitTest(
     (results: XRHitTestResult[], getWorldMatrix: (target: THREE.Matrix4, result: XRHitTestResult) => void) => {
       if (results.length === 0) return;
-      getWorldMatrix(matrixHelper, results[0]);
-      floorYRef.current = new THREE.Vector3().setFromMatrixPosition(matrixHelper).y;
+      getWorldMatrix(matrixHelperRef.current, results[0]);
+      floorYRef.current = new THREE.Vector3().setFromMatrixPosition(matrixHelperRef.current).y;
     },
     "viewer",
     "plane",
@@ -146,16 +146,17 @@ function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefOb
   // カメラ前方1.5mにアバターを配置し、ユーザーに向ける
   useFrame(() => {
     if (!groupRef.current) return;
-    camera.getWorldDirection(tmpDir);
-    tmpDir.y = 0;
-    if (tmpDir.lengthSq() < 0.001) return;
-    tmpDir.normalize();
+    const dir = tmpDirRef.current;
+    camera.getWorldDirection(dir);
+    dir.y = 0;
+    if (dir.lengthSq() < 0.001) return;
+    dir.normalize();
     groupRef.current.position.set(
-      camera.position.x + tmpDir.x * 1.5,
+      camera.position.x + dir.x * 1.5,
       floorYRef.current,
-      camera.position.z + tmpDir.z * 1.5,
+      camera.position.z + dir.z * 1.5,
     );
-    groupRef.current.rotation.y = Math.atan2(tmpDir.x, tmpDir.z) + Math.PI;
+    groupRef.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
   });
 
   return (
@@ -180,7 +181,6 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
 
   useEffect(() => {
     // 両パスを Promise に統一し、setState を常に非同期コールバック内で呼ぶ
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const promise: Promise<boolean> =
       typeof navigator !== "undefined" && "xr" in navigator
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
