@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, OrbitControls } from "@react-three/drei";
+import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
 import * as THREE from "three";
 
 // Polly viseme → 口の開き度マッピング
@@ -103,7 +103,9 @@ interface AvatarModelProps {
 }
 
 function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
-  const { scene } = useGLTF("/models/nimo_anime.glb");
+  const { scene: gltfScene } = useGLTF("/models/nimo_anime.glb");
+  // シーンをクローンして共有参照の競合を防ぐ
+  const scene = useMemo(() => gltfScene.clone(true), [gltfScene]);
   const animMethodRef = useRef<AnimMethod | null>(null);
   const currentOpennessRef = useRef(0);
 
@@ -130,19 +132,12 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
     } else if (method.type === "bone") {
       method.bone.rotation.x = v * 0.35;
     } else if (method.type === "head_bob") {
-      // 話し中: 頭を小刻みに上下（sine wave bob）
       const bob = Math.sin(clock.elapsedTime * 10) * v * 0.08;
       method.bone.rotation.x = method.restRotX + bob;
     }
   });
 
-  return (
-    <primitive
-      object={scene}
-      scale={1.5}
-      position={[0, -1.5, 0]}
-    />
-  );
+  return <primitive object={scene} />;
 }
 
 interface AvatarViewerProps {
@@ -157,18 +152,17 @@ export const AvatarViewer = ({
   return (
     <div className="bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg overflow-hidden shadow-lg h-96">
       <Canvas
-        camera={{ position: [0, 0, 3], fov: 45 }}
+        camera={{ position: [0, 0, 5], fov: 50 }}
         gl={{ antialias: true }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[2, 4, 2]} intensity={1.2} />
-        <AvatarModel currentViseme={currentViseme} isSpeaking={isSpeaking} />
-        <OrbitControls
-          enablePan={false}
-          minDistance={1.5}
-          maxDistance={6}
-          target={[0, 0, 0]}
-        />
+        <Bounds fit clip observe>
+          <Center>
+            <AvatarModel currentViseme={currentViseme} isSpeaking={isSpeaking} />
+          </Center>
+        </Bounds>
+        <OrbitControls enablePan={false} />
       </Canvas>
     </div>
   );
