@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
-import { createXRStore, XR, useXRHitTest } from "@react-three/xr";
+import { createXRStore, XR, useXRHitTest, useXR } from "@react-three/xr";
 import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 
@@ -124,7 +124,24 @@ function AvatarModel({ visemeStateRef }: { visemeStateRef: React.MutableRefObjec
   return <primitive object={scene} />;
 }
 
-// AR空間でのアバター（カメラ前方1.5mに配置）
+// XRセッション開始を検知してコールバックを呼ぶ
+function XRSessionMonitor({ onStart }: { onStart?: () => void }) {
+  const hasSession = useXR((state) => !!state.session);
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (hasSession && !firedRef.current) {
+      firedRef.current = true;
+      onStart?.();
+    } else if (!hasSession) {
+      firedRef.current = false;
+    }
+  }, [hasSession, onStart]);
+
+  return null;
+}
+
+// AR空間でのアバター（カメラ前方2.5mに配置）
 function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefObject<VisemeState> }) {
   const groupRef = useRef<THREE.Group>(null);
   const floorYRef = useRef(0);
@@ -152,9 +169,9 @@ function ARSceneContent({ visemeStateRef }: { visemeStateRef: React.MutableRefOb
     if (dir.lengthSq() < 0.001) return;
     dir.normalize();
     groupRef.current.position.set(
-      camera.position.x + dir.x * 1.5,
+      camera.position.x + dir.x * 2.5,
       floorYRef.current,
-      camera.position.z + dir.z * 1.5,
+      camera.position.z + dir.z * 2.5,
     );
     groupRef.current.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
   });
@@ -174,9 +191,10 @@ const DEFAULT_VISEME_REF = { current: { viseme: "sil", isSpeaking: false } };
 
 interface AvatarViewerProps {
   visemeStateRef?: React.MutableRefObject<VisemeState>;
+  onARStart?: () => void;
 }
 
-export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarViewerProps) => {
+export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF, onARStart }: AvatarViewerProps) => {
   const [isARSupported, setIsARSupported] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -197,6 +215,7 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
         gl={{ antialias: true }}
       >
         <XR store={xrStore}>
+          <XRSessionMonitor onStart={onARStart} />
           {/* 通常ビュー */}
           <ambientLight intensity={0.6} />
           <directionalLight position={[2, 4, 2]} intensity={1.2} />
