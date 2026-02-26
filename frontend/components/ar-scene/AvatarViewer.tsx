@@ -118,7 +118,7 @@ interface AvatarModelProps {
 }
 
 function AvatarModel({ visemeStateRef }: AvatarModelProps) {
-  const { scene: gltfScene } = useGLTF("/models/female.glb");
+  const { scene: gltfScene } = useGLTF("/models/Meshy_AI_Animation_Agree_Gesture_withSkin.glb");
   // SkeletonUtils.clone: SkinnedMesh のボーンバインディングを正しく再構築する
   // scene.clone(true) だと SkinnedMesh が元のスケルトンを参照したまま骨回転が無視される
   const scene = useMemo(() => SkeletonUtils.clone(gltfScene) as THREE.Group, [gltfScene]);
@@ -199,4 +199,4 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
   );
 };
 
-useGLTF.preload("/models/female.glb");
+useGLTF.preload("/models/Meshy_AI_Animation_Agree_Gesture_withSkin.glb");
