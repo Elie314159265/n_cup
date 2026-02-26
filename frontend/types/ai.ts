@@ -26,9 +26,16 @@ export type AiSpeechRequest = {
   language_code?: string;
 };
 
+// Polly speech marks から取得する口形イベント
+export type Viseme = {
+  time: number;  // 音声開始からのミリ秒
+  value: string; // "sil" | "a" | "e" | "i" | "o" | "u" | etc.
+};
+
 export type AiSpeechResponse = {
   audio_url: string;
   duration: number;
+  visemes: Viseme[];
 };
 
 export type AiTranscribeResponse = {

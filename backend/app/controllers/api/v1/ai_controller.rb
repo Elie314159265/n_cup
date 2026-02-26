@@ -77,7 +77,8 @@ module Api
         if result[:audio_url]
           render json: {
             audio_url: result[:audio_url],
-            duration: result[:duration]
+            duration: result[:duration],
+            visemes: result[:visemes] || []
           }
         else
           render json: { error: result[:error] }, status: :internal_server_error
