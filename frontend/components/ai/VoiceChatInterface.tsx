@@ -20,6 +20,8 @@ interface VoiceChatInterfaceProps {
   conversationId?: number;
   onEnd?: () => void;
   onVisemeChange?: (viseme: string) => void;
+  /** AR開始時に自動で会話をループ開始する */
+  autoStart?: boolean;
 }
 
 // binary search: currentTimeMs 以下で最後の viseme を返す
@@ -47,6 +49,7 @@ export const VoiceChatInterface = ({
   conversationId,
   onEnd,
   onVisemeChange,
+  autoStart = false,
 }: VoiceChatInterfaceProps) => {
   const [step, setStep] = useState<Step>("idle");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -87,6 +90,14 @@ export const VoiceChatInterface = ({
   useEffect(() => {
     return () => stopVisemeLoop();
   }, [stopVisemeLoop]);
+
+  // autoStart: idle になるたびに自動でリスニング開始（初回は800ms、以降は1500ms待機）
+  useEffect(() => {
+    if (!autoStart || step !== "idle" || isEnding) return;
+    const delay = history.length === 0 ? 800 : 1500;
+    const timer = setTimeout(startListening, delay);
+    return () => clearTimeout(timer);
+  }, [autoStart, step, isEnding, history.length, startListening]);
 
   const processAiResponse = useCallback(
     async (userText: string) => {
@@ -310,7 +321,7 @@ export const VoiceChatInterface = ({
           <Button onClick={stopListening} variant="danger" className="flex-1">
             ⏹️ 送信
           </Button>
-        ) : (
+        ) : !autoStart ? (
           <Button
             onClick={startListening}
             disabled={isBusy || isEnding}
@@ -319,7 +330,7 @@ export const VoiceChatInterface = ({
           >
             🎤 話しかける
           </Button>
-        )}
+        ) : null}
         <Button
           variant="secondary"
           onClick={handleEnd}

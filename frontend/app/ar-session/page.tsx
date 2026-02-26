@@ -28,6 +28,7 @@ function ARSessionContent() {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [isStarted, setIsStarted] = useState(false);
+  const [arAutoStart, setArAutoStart] = useState(false);
   // viseme はRAFループから毎フレーム更新されるためrefで管理（setState不要）
   const visemeStateRef = useRef({ viseme: "sil", isSpeaking: false });
   const silTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -186,7 +187,10 @@ function ARSessionContent() {
       <div className="max-w-xl mx-auto space-y-4">
         {/* AR表示エリア */}
         <div className="card overflow-hidden">
-          <AvatarViewer visemeStateRef={visemeStateRef} />
+          <AvatarViewer
+            visemeStateRef={visemeStateRef}
+            onARStart={() => setArAutoStart(true)}
+          />
         </div>
 
         {/* 音声チャット */}
@@ -199,6 +203,7 @@ function ARSessionContent() {
               conversationId={conversationId}
               onEnd={() => router.push("/matches")}
               onVisemeChange={handleVisemeChange}
+              autoStart={arAutoStart}
             />
           )}
         </div>
