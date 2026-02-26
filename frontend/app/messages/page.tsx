@@ -352,14 +352,14 @@ export default function MessagesPage() {
                   onClick={() => handleReject(selectedRequest.id)}
                   className="flex-1 justify-center"
                 >
-                  <Bomb size={14} className="mr-1.5" />
+                  <Bomb size={16} />
                   BOMB
                 </Button>
                 <Button
                   onClick={() => handleApprove(selectedRequest.id)}
                   className="flex-1 justify-center"
                 >
-                  <Send size={14} className="mr-1.5" />
+                  <Send size={16} />
                   承認する
                 </Button>
               </div>
