@@ -47,7 +47,7 @@ RSpec.describe 'Api::V1::Ai', type: :request do
         .and_return({
           audio_url: 'https://example.com/audio.mp3',
           duration: 1.2,
-          visemes: [{ time: 0, value: 'sil' }, { time: 100, value: 'a' }]
+          visemes: [ { time: 0, value: 'sil' }, { time: 100, value: 'a' } ]
         })
 
       post '/api/v1/ai/speech',
