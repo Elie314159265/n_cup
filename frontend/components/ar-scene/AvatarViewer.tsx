@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
 import * as THREE from "three";
@@ -97,12 +97,13 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   return { type: "none" };
 }
 
+type VisemeState = { viseme: string; isSpeaking: boolean };
+
 interface AvatarModelProps {
-  currentViseme: string;
-  isSpeaking: boolean;
+  visemeStateRef: React.MutableRefObject<VisemeState>;
 }
 
-function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
+function AvatarModel({ visemeStateRef }: AvatarModelProps) {
   const { scene: gltfScene } = useGLTF("/models/nimo_anime.glb");
   const scene = useMemo(() => gltfScene.clone(true), [gltfScene]);
   const animMethodRef = useRef<AnimMethod | null>(null);
@@ -118,6 +119,8 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
   useFrame(({ clock }) => {
     const method = animMethodRef.current;
     if (!method || method.type === "none") return;
+
+    const { viseme: currentViseme, isSpeaking } = visemeStateRef.current;
 
     if (method.type === "morph" || method.type === "bone") {
       // viseme ごとに openness を補間（lip sync）
@@ -151,15 +154,14 @@ function AvatarModel({ currentViseme, isSpeaking }: AvatarModelProps) {
   return <primitive object={scene} />;
 }
 
+// デフォルト用の静的ref（AvatarCustomizer等で props 省略時に使用）
+const DEFAULT_VISEME_REF = { current: { viseme: "sil", isSpeaking: false } };
+
 interface AvatarViewerProps {
-  isSpeaking?: boolean;
-  currentViseme?: string;
+  visemeStateRef?: React.MutableRefObject<VisemeState>;
 }
 
-export const AvatarViewer = ({
-  isSpeaking = false,
-  currentViseme = "sil",
-}: AvatarViewerProps) => {
+export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarViewerProps) => {
   return (
     <div className="bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg overflow-hidden shadow-lg h-96">
       <Canvas
@@ -170,7 +172,7 @@ export const AvatarViewer = ({
         <directionalLight position={[2, 4, 2]} intensity={1.2} />
         <Bounds fit clip observe>
           <Center>
-            <AvatarModel currentViseme={currentViseme} isSpeaking={isSpeaking} />
+            <AvatarModel visemeStateRef={visemeStateRef} />
           </Center>
         </Bounds>
         <OrbitControls enablePan={false} />
