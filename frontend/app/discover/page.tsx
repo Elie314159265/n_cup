@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import Link from "next/link";
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import { Explosion } from "@/components/discover/bomb/Explosion";
 import { HeartExplosion } from "@/components/discover/match/Heart";
@@ -172,19 +171,9 @@ export default function DiscoverPage() {
           <h1 className="text-3xl font-black gradient-text mb-2">
             気になる相手を探す
           </h1>
-          <p className="text-gray-500 text-sm mb-4">
+          <p className="text-gray-500 text-sm">
             スワイプしてあなたの理想の人を見つけましょう
           </p>
-          <Link
-            href="/ar-discover"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90"
-            style={{
-              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-              boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
-            }}
-          >
-            📷 ARで見る
-          </Link>
         </div>
 
         {/* フィルター */}
