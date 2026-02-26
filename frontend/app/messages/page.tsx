@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { User, Heart, Mail, MessageCircle, Bomb, Send } from "lucide-react";
+import { Canvas } from "@react-three/fiber";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
+import { Explosion } from "@/components/discover/bomb/Explosion";
 import { getMatches } from "@/actions/matching";
 import { getConversations } from "@/actions/conversations";
 
@@ -61,6 +63,8 @@ export default function MessagesPage() {
   const [selectedRequest, setSelectedRequest] = useState<RequestUser | null>(
     null,
   );
+  const [showExplosion, setShowExplosion] = useState(false);
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
 
   useEffect(() => {
     // ローカルストレージからいいねしたユーザーを取得（デモ用フォールバック）
@@ -95,12 +99,29 @@ export default function MessagesPage() {
   };
 
   const handleReject = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+    setPendingRejectId(id);
+    setShowExplosion(true);
+  };
+
+  const handleExplosionComplete = () => {
+    setShowExplosion(false);
+    if (pendingRejectId) {
+      setRequests((prev) => prev.filter((r) => r.id !== pendingRejectId));
+      setPendingRejectId(null);
+    }
     setSelectedRequest(null);
   };
 
   return (
     <div className="page-bg min-h-screen">
+      {/* 爆発エフェクト */}
+      {showExplosion && (
+        <div className="fixed inset-0 z-100 pointer-events-none">
+          <Canvas>
+            <Explosion onComplete={handleExplosionComplete} />
+          </Canvas>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-black gradient-text mb-1">メッセージ</h1>
