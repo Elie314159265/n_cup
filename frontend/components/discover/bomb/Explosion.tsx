@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useFrame } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 type SparkData = {
@@ -850,3 +850,58 @@ export const Explosion: React.FC<ExplosionProps> = ({
     </group>
   );
 };
+
+// ── テキスト付きフルオーバーレイ ─────────────────────────────────────────
+type ExplosionOverlayProps = {
+  partnerName?: string;
+  onComplete?: () => void;
+  zIndex?: number;
+};
+
+export const ExplosionOverlay: React.FC<ExplosionOverlayProps> = ({
+  partnerName,
+  onComplete,
+  zIndex = 100,
+}) => (
+  <div
+    className="fixed inset-0 pointer-events-none"
+    style={{ zIndex }}
+  >
+    <Canvas>
+      <Explosion onComplete={onComplete} />
+    </Canvas>
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+      <style>{`
+        @keyframes bombText {
+          0%   { transform: scale(0.2) rotate(-8deg); opacity: 0; }
+          40%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+          60%  { transform: scale(0.95) rotate(-1deg); opacity: 1; }
+          80%  { transform: scale(1.05) rotate(1deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes bombOrange {
+          0%, 100% { text-shadow: 0 0 20px #ff6b00, 0 0 50px #ff3d00, 0 0 100px #ff6b00; }
+          50%       { text-shadow: 0 0 40px #ff9500, 0 0 80px #ff6b00, 0 0 160px #ff3d00; }
+        }
+      `}</style>
+      {partnerName && (
+        <div
+          style={{
+            animation:
+              "bombText 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards, bombOrange 1s ease-in-out 0.5s infinite",
+            fontSize: "clamp(2rem, 9vw, 5rem)",
+            fontWeight: 900,
+            background:
+              "linear-gradient(135deg, #ff6b00 0%, #ff3d00 40%, #ffcc00 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {partnerName}さんを爆破！
+        </div>
+      )}
+    </div>
+  </div>
+);

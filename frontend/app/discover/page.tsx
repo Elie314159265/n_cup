@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
 import { Bomb, Heart, CheckCircle2, Send, Search } from "lucide-react";
 import { SwipeCard } from "@/components/matching/SwipeCard";
-import { Explosion } from "@/components/discover/bomb/Explosion";
+import { ExplosionOverlay } from "@/components/discover/bomb/Explosion";
 import {
   MatchingFilter,
   FilterOptions,
@@ -142,11 +141,11 @@ export default function DiscoverPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* 爆発エフェクト（左スワイプ時） */}
         {showExplosion && (
-          <div className="fixed inset-0 z-50 pointer-events-none">
-            <Canvas>
-              <Explosion onComplete={handleExplosionComplete} />
-            </Canvas>
-          </div>
+          <ExplosionOverlay
+            partnerName={profiles[currentIndex]?.username}
+            onComplete={handleExplosionComplete}
+            zIndex={50}
+          />
         )}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-black gradient-text mb-2">

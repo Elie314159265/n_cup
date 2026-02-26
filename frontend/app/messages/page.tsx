@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { User, Heart, Mail, MessageCircle, Bomb, Send } from "lucide-react";
-import { Canvas } from "@react-three/fiber";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ChatWindow } from "@/components/messaging/ChatWindow";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
-import { Explosion } from "@/components/discover/bomb/Explosion";
+import { ExplosionOverlay } from "@/components/discover/bomb/Explosion";
+import { MatchingCelebration } from "@/components/discover/bomb/MatchingCelebration";
 import { getMatches } from "@/actions/matching";
 import { getConversations } from "@/actions/conversations";
 
@@ -65,6 +65,9 @@ export default function MessagesPage() {
   );
   const [showExplosion, setShowExplosion] = useState(false);
   const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
+  const [explodingPartnerName, setExplodingPartnerName] = useState<string>("");
+  const [showMatchingCelebration, setShowMatchingCelebration] = useState(false);
+  const [matchingPartnerName, setMatchingPartnerName] = useState<string>("");
 
   useEffect(() => {
     // ローカルストレージからいいねしたユーザーを取得（デモ用フォールバック）
@@ -93,12 +96,16 @@ export default function MessagesPage() {
   }, []);
 
   const handleApprove = (id: string) => {
+    const req = requests.find((r) => r.id === id);
     setRequests((prev) => prev.filter((r) => r.id !== id));
     setSelectedRequest(null);
-    alert("マッチングしました！");
+    setMatchingPartnerName(req?.username ?? "");
+    setShowMatchingCelebration(true);
   };
 
   const handleReject = (id: string) => {
+    const req = requests.find((r) => r.id === id);
+    setExplodingPartnerName(req?.username ?? "");
     setPendingRejectId(id);
     setShowExplosion(true);
   };
@@ -116,11 +123,17 @@ export default function MessagesPage() {
     <div className="page-bg min-h-screen">
       {/* 爆発エフェクト */}
       {showExplosion && (
-        <div className="fixed inset-0 z-100 pointer-events-none">
-          <Canvas>
-            <Explosion onComplete={handleExplosionComplete} />
-          </Canvas>
-        </div>
+        <ExplosionOverlay
+          partnerName={explodingPartnerName}
+          onComplete={handleExplosionComplete}
+        />
+      )}
+      {/* マッチング成立エフェクト */}
+      {showMatchingCelebration && (
+        <MatchingCelebration
+          partnerName={matchingPartnerName}
+          onComplete={() => setShowMatchingCelebration(false)}
+        />
       )}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-10">
