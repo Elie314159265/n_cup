@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -121,10 +121,11 @@ export const HeartExplosion = ({
   onComplete,
 }: HeartExplosionProps) => {
   const [finished, setFinished] = useState(false);
+  const [particles, setParticles] = useState<ParticleProps[]>([]);
 
   // パーティクルの初期データを生成
-  const particles = useMemo(() => {
-    return new Array(count).fill(0).map(() => {
+  useEffect(() => {
+    const newParticles = new Array(count).fill(0).map(() => {
       // ランダムな方向ベクトル（上方向へのバイアスあり）
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -148,6 +149,8 @@ export const HeartExplosion = ({
         velocity: new THREE.Vector3(vx, vy, vz),
       };
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setParticles(newParticles);
   }, [count]);
 
   // 全体のタイマー管理

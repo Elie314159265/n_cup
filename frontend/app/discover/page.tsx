@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bomb, Heart, CheckCircle2, Send, Search } from "lucide-react";
+import { Bomb, Heart, CheckCircle2, Send } from "lucide-react";
 import { SwipeCard } from "@/components/matching/SwipeCard";
 import { Explosion } from "@/components/discover/bomb/Explosion";
 import { HeartExplosion } from "@/components/discover/match/Heart";
@@ -79,7 +79,6 @@ export default function DiscoverPage() {
   const [message, setMessage] = useState("");
   const [showExplosion, setShowExplosion] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
-  const [showFireworks, setShowFireworks] = useState(false);
 
   // マッチング候補を取得（バックエンド対応後に実データが入る）
   useEffect(() => {
@@ -109,7 +108,6 @@ export default function DiscoverPage() {
 
   const handleLike = () => {
     setShowHeart(true);
-    setShowFireworks(true);
     setTimeout(() => {
       setIsModalOpen(true);
     }, 1200);
@@ -146,10 +144,6 @@ export default function DiscoverPage() {
 
   const handleHeartComplete = () => {
     setShowHeart(false);
-  };
-
-  const handleFireworksComplete = () => {
-    setShowFireworks(false);
   };
 
   return (
