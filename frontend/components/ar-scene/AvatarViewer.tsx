@@ -50,13 +50,14 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   // Tier1: モーフターゲット検索
   let found: AnimMethod | null = null;
   scene.traverse((obj) => {
-    if (found) return;
     if (!(obj instanceof THREE.SkinnedMesh)) return;
     const dict = obj.morphTargetDictionary;
     if (!dict) return;
+    console.log(`[AvatarViewer] Morph targets on "${obj.name}":`, Object.keys(dict));
+    if (found) return;
     for (const name of MORPH_CANDIDATES) {
       if (name in dict) {
-        console.log(`[AvatarViewer] Found morph target: "${name}"`);
+        console.log(`[AvatarViewer] Using morph target: "${name}"`);
         found = { type: "morph", mesh: obj, index: dict[name] };
         return;
       }
@@ -65,19 +66,21 @@ function discoverAnimMethod(scene: THREE.Group): AnimMethod {
   if (found) return found;
 
   // Tier2: 顎ボーン検索
+  const allBones: string[] = [];
   let bone: THREE.Bone | null = null;
   scene.traverse((obj) => {
-    if (bone) return;
     if (!(obj instanceof THREE.Bone)) return;
-    if (JAW_BONE_CANDIDATES.includes(obj.name)) {
-      console.log(`[AvatarViewer] Found jaw bone: "${obj.name}"`);
+    allBones.push(obj.name);
+    if (!bone && JAW_BONE_CANDIDATES.includes(obj.name)) {
+      console.log(`[AvatarViewer] Using jaw bone: "${obj.name}"`);
       bone = obj;
     }
   });
   if (bone) return { type: "bone", bone };
 
-  // Tier3: フォールバック
-  console.warn("[AvatarViewer] No morph target or jaw bone found");
+  // Tier3: フォールバック（全ボーン名をログ）
+  console.warn("[AvatarViewer] No morph target or jaw bone found.");
+  console.warn("[AvatarViewer] All bones:", allBones);
   return { type: "none" };
 }
 
