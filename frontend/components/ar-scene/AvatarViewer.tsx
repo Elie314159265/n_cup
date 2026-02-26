@@ -183,7 +183,7 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
   return (
     <div className="bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg overflow-hidden shadow-lg h-96">
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
+        camera={{ position: [0, 1.5, 4], fov: 45 }}
         gl={{ antialias: true }}
       >
         <ambientLight intensity={0.6} />
@@ -193,7 +193,7 @@ export const AvatarViewer = ({ visemeStateRef = DEFAULT_VISEME_REF }: AvatarView
             <AvatarModel visemeStateRef={visemeStateRef} />
           </Center>
         </Bounds>
-        <OrbitControls enablePan={false} />
+        <OrbitControls enablePan={false} target={[0, 1, 0]} />
       </Canvas>
     </div>
   );
