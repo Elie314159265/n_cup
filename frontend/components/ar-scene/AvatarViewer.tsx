@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center, Bounds } from "@react-three/drei";
 import * as THREE from "three";
+import { SkeletonUtils } from "three-stdlib";
 
 // Polly viseme → 口の開き度マッピング
 const VISEME_OPENNESS: Record<string, number> = {
@@ -105,7 +106,9 @@ interface AvatarModelProps {
 
 function AvatarModel({ visemeStateRef }: AvatarModelProps) {
   const { scene: gltfScene } = useGLTF("/models/nimo_anime.glb");
-  const scene = useMemo(() => gltfScene.clone(true), [gltfScene]);
+  // SkeletonUtils.clone: SkinnedMesh のボーンバインディングを正しく再構築する
+  // scene.clone(true) だと SkinnedMesh が元のスケルトンを参照したまま骨回転が無視される
+  const scene = useMemo(() => SkeletonUtils.clone(gltfScene) as THREE.Group, [gltfScene]);
   const animMethodRef = useRef<AnimMethod | null>(null);
   // morph/bone 用: viseme openness をゆっくり補間
   const currentOpennessRef = useRef(0);
@@ -145,8 +148,11 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
         isSpeaking ? 0.15 : 0.03,
       );
       const energy = speakingEnergyRef.current;
-      const bob = Math.sin(clock.elapsedTime * 4) * energy * 0.25;
-      method.bone.rotation.x = method.restRotX + bob;
+      const t = clock.elapsedTime;
+      // X軸: 上下に大きく揺れる（約±34°）
+      method.bone.rotation.x = method.restRotX + Math.sin(t * 4) * energy * 0.6;
+      // Z軸: 左右にも揺れて立体感を出す（約±17°）
+      method.bone.rotation.z = Math.sin(t * 4 + Math.PI / 3) * energy * 0.3;
     }
   });
 
