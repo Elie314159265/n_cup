@@ -148,8 +148,11 @@ function AvatarModel({ visemeStateRef }: AvatarModelProps) {
         isSpeaking ? 0.15 : 0.03,
       );
       const energy = speakingEnergyRef.current;
-      const bob = Math.sin(clock.elapsedTime * 4) * energy * 0.25;
-      method.bone.rotation.x = method.restRotX + bob;
+      const t = clock.elapsedTime;
+      // X軸: 上下に大きく揺れる（約±34°）
+      method.bone.rotation.x = method.restRotX + Math.sin(t * 4) * energy * 0.6;
+      // Z軸: 左右にも揺れて立体感を出す（約±17°）
+      method.bone.rotation.z = Math.sin(t * 4 + Math.PI / 3) * energy * 0.3;
     }
   });
 
